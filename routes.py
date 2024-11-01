@@ -1,8 +1,10 @@
-from flask import render_template, request, redirect, url_for, flash
+from flask import render_template, request, redirect, url_for, flash, jsonify
 from flask_login import login_user, logout_user, login_required, current_user
-from models import User, UserRole, db
+from models import StudentProfile, User, UserRole, db, Conversation, Message, SenderType
 from werkzeug.security import check_password_hash, generate_password_hash
 from forms import LoginForm
+from datetime import datetime, timezone
+import json
 
 def init_routes(app):
     @app.route('/')
@@ -15,12 +17,13 @@ def init_routes(app):
         if form.validate_on_submit():
             user = User.query.filter_by(username=form.username.data).first()
             if user and check_password_hash(user.password_hash, form.password.data):
+                login_user(user)
+                flash('Logged in successfully.', 'success')
+                # Redirect based on user role
                 if user.role == UserRole.TEACHER:
-                    login_user(user)
-                    flash('Logged in successfully.', 'success')
                     return redirect(url_for('admin_dashboard'))
-                else:
-                    flash('Access denied: You are not an admin.', 'danger')
+                elif user.role == UserRole.STUDENT:
+                    return redirect(url_for('tutor'))
             else:
                 flash('Invalid username or password.', 'danger')
         return render_template('login.html', form=form)
@@ -76,8 +79,120 @@ def init_routes(app):
     @app.route('/tutor')
     @login_required
     def tutor():
-        return render_template('tutor.html')
-    
+        # Get user's chat history
+        chat_history = []
+        if current_user.student_profile:
+            conversations = Conversation.query.filter_by(
+                student_id=current_user.student_profile.user_id
+            ).order_by(Conversation.updated_at.desc()).all()
+            
+            chat_history = [{
+                'id': conv.id,
+                'title': conv.messages[0].message_content[:30] + "..." if conv.messages else "New Chat",
+                'date': conv.created_at.strftime("%Y-%m-%d %H:%M")
+            } for conv in conversations]
+
+        # For now, return empty messages for new chat
+        messages = []
+        
+        return render_template('tutor.html', chat_history=chat_history, messages=messages)
+
+    @app.route('/tutor/send_message', methods=['POST'])
+    @login_required
+    def send_message():
+        # Check if user is a student
+        if current_user.role != UserRole.STUDENT:
+            return jsonify({'error': 'Only students can use the tutor'}), 403
+
+        # Ensure student profile exists
+        if not hasattr(current_user, 'student_profile') or not current_user.student_profile:
+            # Create student profile if it doesn't exist
+            student_profile = StudentProfile(user_id=current_user.id)
+            db.session.add(student_profile)
+            try:
+                db.session.commit()
+            except Exception as e:
+                db.session.rollback()
+                print(f"Error creating student profile: {str(e)}")
+                return jsonify({'error': 'Failed to create student profile'}), 500
+
+        data = request.get_json()
+        message_content = data.get('message')
+        conversation_id = data.get('conversation_id')
+
+        if not message_content:
+            return jsonify({'error': 'Message content is required'}), 400
+
+        try:
+            # Create new conversation if none exists
+            if not conversation_id:
+                conversation = Conversation(student_id=current_user.student_profile.user_id)
+                db.session.add(conversation)
+                db.session.flush()
+            else:
+                conversation = Conversation.query.get(conversation_id)
+                if not conversation or conversation.student_id != current_user.student_profile.user_id:
+                    return jsonify({'error': 'Invalid conversation'}), 404
+
+            # Save user message
+            user_message = Message(
+                conversation_id=conversation.id,
+                sender_type=SenderType.STUDENT,
+                sender_id=current_user.id,
+                message_content=message_content
+            )
+            db.session.add(user_message)
+
+            # Mock AI response
+            mock_response = "This is a mock response from the AI tutor. In the future, this will be replaced with actual ChatGPT responses."
+            ai_message = Message(
+                conversation_id=conversation.id,
+                sender_type=SenderType.AI_TUTOR,
+                message_content=mock_response
+            )
+            db.session.add(ai_message)
+
+            # Update conversation timestamp
+            conversation.updated_at = datetime.now(timezone.utc)
+            
+            db.session.commit()
+
+            return jsonify({
+                'success': True,
+                'conversation_id': conversation.id,
+                'messages': [
+                    {
+                        'role': 'user',
+                        'content': message_content
+                    },
+                    {
+                        'role': 'assistant',
+                        'content': mock_response
+                    }
+                ]
+            })
+
+        except Exception as e:
+            db.session.rollback()
+            print(f"Error: {str(e)}")
+            return jsonify({'error': 'Failed to send message'}), 500
+
+    @app.route('/tutor/get_conversation/<int:conversation_id>')
+    @login_required
+    def get_conversation(conversation_id):
+        conversation = Conversation.query.get_or_404(conversation_id)
+        
+        # Verify the conversation belongs to the current user
+        if conversation.student_id != current_user.student_profile.user_id:
+            return jsonify({'error': 'Unauthorized'}), 403
+
+        messages = [{
+            'role': 'assistant' if msg.sender_type == SenderType.AI_TUTOR else 'user',
+            'content': msg.message_content
+        } for msg in conversation.messages]
+
+        return jsonify({'messages': messages})
+
     @app.route('/dashboard')
     @login_required
     def dashboard():

@@ -15,7 +15,7 @@
         </div>
         <div class="chat-history">
             {% for chat in chat_history %}
-            <div class="history-item">
+            <div class="history-item" data-conversation-id="{{ chat.id }}">
                 <span class="history-title">{{ chat.title }}</span>
                 <span class="history-date">{{ chat.date }}</span>
             </div>
