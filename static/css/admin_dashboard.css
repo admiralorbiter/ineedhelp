@@ -1,0 +1,105 @@
+/* Card Styling */
+.card {
+    border: none;
+    border-radius: 8px;
+    background-color: white;
+    margin-bottom: 2rem;
+}
+
+.card-header {
+    background-color: var(--dark-purple) !important;
+    border-radius: 8px 8px 0 0 !important;
+    padding: 1rem;
+}
+
+.card-body {
+    padding: 1.5rem;
+}
+
+/* Form Styling */
+.form-label {
+    color: var(--raisin-black);
+    font-weight: 600;
+}
+
+.form-control {
+    border: 2px solid #e9ecef;
+    border-radius: 6px;
+    padding: 0.75rem;
+    transition: border-color 0.3s ease;
+}
+
+.form-control:focus {
+    border-color: var(--eggplant);
+    box-shadow: 0 0 0 0.2rem rgba(55, 37, 73, 0.25);
+}
+
+/* Button Styling */
+.btn-primary {
+    background-color: var(--dark-purple);
+    border-color: var(--dark-purple);
+    transition: all 0.3s ease;
+}
+
+.btn-primary:hover {
+    background-color: var(--eggplant);
+    border-color: var(--eggplant);
+}
+
+/* Table Styling */
+.table {
+    margin-bottom: 0;
+}
+
+.table thead th {
+    background-color: var(--dark-purple);
+    color: var(--pale-dogwood);
+    border-bottom: none;
+    padding: 1rem;
+}
+
+.table tbody tr:hover {
+    background-color: rgba(234, 205, 194, 0.1);
+}
+
+.table td {
+    padding: 1rem;
+    vertical-align: middle;
+}
+
+/* Action Buttons */
+.btn-outline-primary {
+    color: var(--dark-purple);
+    border-color: var(--dark-purple);
+}
+
+.btn-outline-primary:hover {
+    background-color: var(--dark-purple);
+    border-color: var(--dark-purple);
+    color: var(--pale-dogwood);
+}
+
+.btn-outline-danger {
+    color: var(--redwood);
+    border-color: var(--redwood);
+}
+
+.btn-outline-danger:hover {
+    background-color: var(--redwood);
+    border-color: var(--redwood);
+}
+
+/* Welcome Section */
+h1 {
+    color: var(--raisin-black);
+    margin-bottom: 0.5rem;
+}
+
+p {
+    color: var(--dark-purple);
+}
+
+/* Shadow Effects */
+.shadow-sm {
+    box-shadow: 0 0.125rem 0.25rem rgba(26, 20, 35, 0.075) !important;
+}
