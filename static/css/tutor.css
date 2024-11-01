@@ -1,0 +1,118 @@
+.chat-container {
+    display: flex;
+    height: calc(100vh - 100px);
+    margin: -20px;
+    background-color: var(--pale-dogwood);
+}
+
+.chat-sidebar {
+    width: 260px;
+    background-color: var(--dark-purple);
+    color: var(--pale-dogwood);
+    border-right: 1px solid var(--eggplant);
+}
+
+.history-header {
+    padding: 1rem;
+    border-bottom: 1px solid var(--eggplant);
+}
+
+.chat-history {
+    overflow-y: auto;
+}
+
+.history-item {
+    padding: 0.8rem 1rem;
+    border-bottom: 1px solid var(--eggplant);
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.history-item:hover {
+    background-color: var(--eggplant);
+}
+
+.history-title {
+    display: block;
+    font-size: 0.9rem;
+    margin-bottom: 0.3rem;
+}
+
+.history-date {
+    font-size: 0.8rem;
+    color: var(--redwood);
+}
+
+.chat-main {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    background-color: var(--pale-dogwood);
+}
+
+.chat-messages {
+    flex-grow: 1;
+    overflow-y: auto;
+    padding: 2rem;
+}
+
+.message {
+    max-width: 80%;
+    margin-bottom: 1.5rem;
+    padding: 1rem;
+    border-radius: 0.5rem;
+}
+
+.message.user {
+    margin-left: auto;
+    background-color: var(--redwood);
+    color: var(--pale-dogwood);
+}
+
+.message.assistant {
+    margin-right: auto;
+    background-color: var(--dark-purple);
+    color: var(--pale-dogwood);
+}
+
+.chat-input-form {
+    padding: 1rem 2rem;
+    background-color: var(--pale-dogwood);
+    border-top: 1px solid var(--eggplant);
+}
+
+.input-container {
+    display: flex;
+    align-items: flex-end;
+    gap: 0.5rem;
+}
+
+.chat-input {
+    flex-grow: 1;
+    padding: 0.8rem;
+    border: 1px solid var(--eggplant);
+    border-radius: 0.5rem;
+    background-color: white;
+    resize: none;
+    max-height: 200px;
+    min-height: 40px;
+}
+
+.send-button {
+    background-color: var(--redwood);
+    color: var(--pale-dogwood);
+    border: none;
+    border-radius: 0.5rem;
+    padding: 0.5rem;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.send-button:hover {
+    background-color: var(--eggplant);
+}
+
+.send-button svg {
+    width: 24px;
+    height: 24px;
+}

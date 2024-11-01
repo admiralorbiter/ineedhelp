@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+
+{% block title %}P2T Tutor{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/tutor.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="chat-container">
+    <!-- Sidebar for chat history -->
+    <div class="chat-sidebar">
+        <div class="history-header">
+            <h3>Chat History</h3>
+        </div>
+        <div class="chat-history">
+            {% for chat in chat_history %}
+            <div class="history-item">
+                <span class="history-title">{{ chat.title }}</span>
+                <span class="history-date">{{ chat.date }}</span>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Main chat area -->
+    <div class="chat-main">
+        <div class="chat-messages" id="chat-messages">
+            {% for message in messages %}
+            <div class="message {% if message.role == 'assistant' %}assistant{% else %}user{% endif %}">
+                <div class="message-content">
+                    {{ message.content }}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        
+        <!-- Chat input form -->
+        <form class="chat-input-form" id="chat-form">
+            <div class="input-container">
+                <textarea 
+                    id="user-input" 
+                    name="message" 
+                    placeholder="Ask your question here..."
+                    rows="1"
+                    class="chat-input"
+                ></textarea>
+                <button type="submit" class="send-button">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="24" height="24">
+                        <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
+                    </svg>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/tutor.js') }}"></script>
+{% endblock %}
