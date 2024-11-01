@@ -1,7 +1,7 @@
 # models.py
 
 from flask_sqlalchemy import SQLAlchemy
-from datetime import datetime, date
+from datetime import datetime, date, timezone
 from enum import Enum
 from flask_login import UserMixin
 
@@ -13,7 +13,7 @@ class UserRole(Enum):
     TEACHER = 'teacher'
     SUPER_ADMIN = 'super_admin'
 
-class SenderType(Enum):
+class SenderType(str, Enum):
     STUDENT = 'student'
     AI_TUTOR = 'ai_tutor'
     TEACHER = 'teacher'
@@ -29,8 +29,8 @@ class User(db.Model, UserMixin):
     first_name = db.Column(db.String(64))
     last_name = db.Column(db.String(64))
     role = db.Column(db.Enum(UserRole), nullable=False)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
+    updated_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc), nullable=False)
 
     # One-to-one relationships
     student_profile = db.relationship(
@@ -124,8 +124,8 @@ class Conversation(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     student_id = db.Column(db.Integer, db.ForeignKey('student_profiles.user_id'), nullable=False)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
+    updated_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc), nullable=False)
 
     # Relationships
     student = db.relationship(
@@ -148,10 +148,10 @@ class Message(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     conversation_id = db.Column(db.Integer, db.ForeignKey('conversations.id'), nullable=False)
-    sender_type = db.Column(db.Enum(SenderType), nullable=False)
+    sender_type = db.Column(db.Enum(SenderType, native_enum=False), nullable=False)
     sender_id = db.Column(db.Integer, nullable=True)  # Null if sender is AI tutor
     message_content = db.Column(db.Text, nullable=False)
-    timestamp = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    timestamp = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
 
     # Relationships
     conversation = db.relationship('Conversation', back_populates='messages')
@@ -167,7 +167,7 @@ class AdminMessage(db.Model):
     sender_id = db.Column(db.Integer, db.ForeignKey('users.id'))
     recipient_id = db.Column(db.Integer, db.ForeignKey('users.id'))
     message_content = db.Column(db.Text, nullable=False)
-    timestamp = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    timestamp = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
     is_read = db.Column(db.Boolean, default=False)
 
     # Relationships
@@ -193,7 +193,7 @@ class PromptCustomization(db.Model):
     prompt_name = db.Column(db.String(128), unique=True, nullable=False)
     prompt_text = db.Column(db.Text, nullable=False)
     is_active = db.Column(db.Boolean, default=True)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
 
     def __repr__(self):
         return f'<PromptCustomization {self.prompt_name}>'
@@ -205,7 +205,7 @@ class AuditLog(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
     action = db.Column(db.String(128), nullable=False)
-    timestamp = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    timestamp = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
     details = db.Column(db.Text)
 
     # Relationships

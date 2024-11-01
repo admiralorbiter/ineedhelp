@@ -6,8 +6,10 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 from forms import LoginForm
 from routes import init_routes
+from config import DevelopmentConfig
 
 app = Flask(__name__)
+app.config.from_object(DevelopmentConfig)
 
 # Configuration
 app.config['SECRET_KEY'] = 'your_secret_key'  # Replace with a secure secret key
