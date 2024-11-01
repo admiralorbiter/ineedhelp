@@ -82,3 +82,52 @@ def init_routes(app):
     @login_required
     def dashboard():
         return render_template('dashboard.html')
+
+    @app.route('/edit_student/<int:student_id>', methods=['GET', 'POST'])
+    @login_required
+    def edit_student(student_id):
+        if current_user.role != UserRole.TEACHER:
+            flash('Access denied: You are not authorized to edit students.', 'danger')
+            return redirect(url_for('index'))
+        
+        student = User.query.get_or_404(student_id)
+        
+        if request.method == 'POST':
+            try:
+                student.first_name = request.form['firstName']
+                student.last_name = request.form['lastName']
+                student.email = request.form['email']
+                student.username = request.form['email']  # Update username if email changes
+                
+                # Only update password if a new one is provided
+                if request.form['password']:
+                    student.password_hash = generate_password_hash(request.form['password'])
+                
+                db.session.commit()
+                flash('Student information updated successfully!', 'success')
+                return redirect(url_for('admin_dashboard'))
+            except Exception as e:
+                db.session.rollback()
+                flash('Error updating student information. Please try again.', 'danger')
+                print(f"Error: {str(e)}")  # For debugging
+        
+        return render_template('edit_student.html', student=student)
+
+    @app.route('/delete_student/<int:student_id>', methods=['POST'])
+    @login_required
+    def delete_student(student_id):
+        if current_user.role != UserRole.TEACHER:
+            flash('Access denied: You are not authorized to delete students.', 'danger')
+            return redirect(url_for('index'))
+        
+        student = User.query.get_or_404(student_id)
+        try:
+            db.session.delete(student)
+            db.session.commit()
+            flash('Student account deleted successfully!', 'success')
+        except Exception as e:
+            db.session.rollback()
+            flash('Error deleting student account. Please try again.', 'danger')
+            print(f"Error: {str(e)}")  # For debugging
+        
+        return redirect(url_for('admin_dashboard'))
