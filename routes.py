@@ -39,3 +39,13 @@ def init_routes(app):
         logout_user()
         flash('You have been logged out.', 'info')
         return redirect(url_for('index')) 
+    
+    @app.route('/tutor')
+    @login_required
+    def tutor():
+        return render_template('tutor.html')
+    
+    @app.route('/dashboard')
+    @login_required
+    def dashboard():
+        return render_template('dashboard.html')
