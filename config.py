@@ -1,8 +1,9 @@
 # config.py
+import os
+
 class Config:
-    SECRET_KEY = 'your_secret_key'
+    SECRET_KEY = os.environ.get('SECRET_KEY', 'your_secret_key')
     SQLALCHEMY_TRACK_MODIFICATIONS = False
-    # Other common configurations
 
 class DevelopmentConfig(Config):
     DEBUG = True
@@ -11,10 +12,8 @@ class DevelopmentConfig(Config):
 class TestingConfig(Config):
     TESTING = True
     SQLALCHEMY_DATABASE_URI = 'sqlite:///test_database.db'
-    WTF_CSRF_ENABLED = False  # Disable CSRF for testing
-    # Other testing configurations
+    WTF_CSRF_ENABLED = False
 
 class ProductionConfig(Config):
     DEBUG = False
-    # Use your production database URI
-    SQLALCHEMY_DATABASE_URI = 'sqlite:///prod_database.db'
+    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL')  # Use Heroku's DATABASE_URL

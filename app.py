@@ -6,16 +6,17 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 from forms import LoginForm
 from routes import init_routes
-from config import DevelopmentConfig
+from config import DevelopmentConfig, ProductionConfig
 from dotenv import load_dotenv
 import os
 
 app = Flask(__name__)
 
-# Replace development config with environment variables
-app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'fallback-secret-key')
-app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'sqlite:///your_database.db')
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+# Load configuration based on the environment
+if os.environ.get('FLASK_ENV') == 'production':
+    app.config.from_object(ProductionConfig)
+else:
+    app.config.from_object(DevelopmentConfig)
 
 # Initialize extensions
 db.init_app(app)
