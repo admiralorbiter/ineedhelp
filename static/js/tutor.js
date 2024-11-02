@@ -73,6 +73,13 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
+    // Add new chat button handler
+    document.getElementById('new-chat-btn').addEventListener('click', function() {
+        currentConversationId = null;
+        chatMessages.innerHTML = '';
+        chatInput.value = '';
+    });
+
     function appendMessages(messages) {
         messages.forEach(message => {
             const messageDiv = document.createElement('div');
