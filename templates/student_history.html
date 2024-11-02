@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+
+{% block title %}Student Chat History{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/tutor.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mt-4">
+        <div class="col">
+            <h1>Chat History for {{ student.first_name }} {{ student.last_name }}</h1>
+            <p>Email: {{ student.email }}</p>
+            <a href="{{ url_for('admin_dashboard') }}" class="btn btn-secondary mb-4">Back to Dashboard</a>
+        </div>
+    </div>
+
+    {% for conversation in conversations %}
+    <div class="card mb-4">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Conversation from {{ conversation.created_at.strftime('%Y-%m-%d %H:%M') }}</h5>
+        </div>
+        <div class="card-body">
+            {% for message in conversation.messages %}
+            <div class="message {% if message.sender_type.value == 'student' %}user{% else %}assistant{% endif %}">
+                <div class="message-content">
+                    {{ message.message_content }}
+                </div>
+                <small class="text-muted">{{ message.timestamp.strftime('%Y-%m-%d %H:%M') }}</small>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %} 

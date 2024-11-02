@@ -246,3 +246,25 @@ def init_routes(app):
             print(f"Error: {str(e)}")  # For debugging
         
         return redirect(url_for('admin_dashboard'))
+
+    @app.route('/student/history/<int:student_id>')
+    @login_required
+    def student_history(student_id):
+        if current_user.role != UserRole.TEACHER:
+            flash('Access denied: You are not authorized to view student history.', 'danger')
+            return redirect(url_for('index'))
+        
+        # Get the student
+        student = User.query.get_or_404(student_id)
+        if student.role != UserRole.STUDENT:
+            flash('Invalid student ID.', 'danger')
+            return redirect(url_for('admin_dashboard'))
+        
+        # Get all conversations for this student
+        conversations = Conversation.query.filter_by(
+            student_id=student.student_profile.user_id
+        ).order_by(Conversation.created_at.desc()).all()
+        
+        return render_template('student_history.html', 
+                             student=student, 
+                             conversations=conversations)

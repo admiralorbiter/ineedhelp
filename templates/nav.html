@@ -1,6 +1,6 @@
 <nav class="navbar navbar-expand-lg custom-nav">
   <div class="container-fluid">
-    <a class="navbar-brand" href="/">TutorMatch</a>
+    <a class="navbar-brand" href="/">I Need Help!</a>
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
       <span class="navbar-toggler-icon"></span>
     </button>
@@ -13,11 +13,7 @@
           {% if current_user.is_authenticated %}
             {% if current_user.role.value == 'teacher' %}
               <a class="nav-link" href="/admin/dashboard">Dashboard</a>
-            {% else %}
-              <a class="nav-link" href="/dashboard">Dashboard</a>
             {% endif %}
-          {% else %}
-            <a class="nav-link" href="/dashboard">Dashboard</a>
           {% endif %}
         </li>
         {% if current_user.is_authenticated %}
