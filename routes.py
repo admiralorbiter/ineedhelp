@@ -5,6 +5,8 @@ from werkzeug.security import check_password_hash, generate_password_hash
 from forms import LoginForm
 from datetime import datetime, timezone
 import json
+from openai import OpenAI
+import os
 
 def init_routes(app):
     @app.route('/')
@@ -143,12 +145,23 @@ def init_routes(app):
             )
             db.session.add(user_message)
 
-            # Mock AI response
-            mock_response = "This is a mock response from the AI tutor. In the future, this will be replaced with actual ChatGPT responses."
+            # Make OpenAI API call
+            client = OpenAI(api_key=os.getenv('OPENAI_API_KEY'))
+            response = client.chat.completions.create(
+                model="gpt-3.5-turbo",
+                messages=[
+                    {"role": "system", "content": "You are a helpful tutor assisting students with their questions."},
+                    {"role": "user", "content": message_content}
+                ]
+            )
+            
+            ai_response = response.choices[0].message.content
+
+            # Save AI response
             ai_message = Message(
                 conversation_id=conversation.id,
                 sender_type=SenderType.AI_TUTOR,
-                message_content=mock_response
+                message_content=ai_response
             )
             db.session.add(ai_message)
 
@@ -167,7 +180,7 @@ def init_routes(app):
                     },
                     {
                         'role': 'assistant',
-                        'content': mock_response
+                        'content': ai_response
                     }
                 ]
             })

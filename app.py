@@ -7,6 +7,7 @@ from flask_login import LoginManager, login_user, logout_user, login_required, c
 from forms import LoginForm
 from routes import init_routes
 from config import DevelopmentConfig
+from dotenv import load_dotenv
 
 app = Flask(__name__)
 app.config.from_object(DevelopmentConfig)
@@ -34,6 +35,9 @@ def load_user(user_id):
 
 # Initialize routes
 init_routes(app)
+
+# Load environment variables from .env file
+load_dotenv()
 
 if __name__ == '__main__':
     app.run(debug=True)
