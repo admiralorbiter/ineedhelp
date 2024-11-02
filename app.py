@@ -8,13 +8,13 @@ from forms import LoginForm
 from routes import init_routes
 from config import DevelopmentConfig
 from dotenv import load_dotenv
+import os
 
 app = Flask(__name__)
-app.config.from_object(DevelopmentConfig)
 
-# Configuration
-app.config['SECRET_KEY'] = 'your_secret_key'  # Replace with a secure secret key
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///your_database.db'
+# Replace development config with environment variables
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'fallback-secret-key')
+app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'sqlite:///your_database.db')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 # Initialize extensions
@@ -40,4 +40,6 @@ init_routes(app)
 load_dotenv()
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    # Use production-ready server configuration
+    port = int(os.environ.get('PORT', 5000))
+    app.run(host='0.0.0.0', port=port)
