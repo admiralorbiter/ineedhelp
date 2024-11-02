@@ -1,8 +1,37 @@
 {% extends "base.html" %}
 
-{% block title %}P2T Tutor{% endblock %}
+{% block title %}P2T Tutor - Your AI Programming Partner{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/index.css') }}">
+{% endblock %}
 
 {% block content %}
-<h1>I NEED HELP</h1>
+<div class="hero-section">
+    <h1>Welcome to I Need Help!</h1>
+    <p class="tagline">Your AI-powered Socratic programming tutor</p>
+</div>
+
+<div class="features-container">
+    <div class="feature-card">
+        <h2>Learn Through Guidance</h2>
+        <p>Instead of giving direct answers, our AI tutor uses the Socratic method to help you discover solutions on your own. Through thoughtful questions and guided exploration, you'll develop stronger problem-solving skills and deeper understanding.</p>
+    </div>
+    
+    <div class="feature-card">
+        <h2>Programming Made Clear</h2>
+        <p>Whether you're struggling with loops, functions, or complex algorithms, our tutor breaks down concepts into manageable pieces. We help you build a strong foundation in programming while encouraging critical thinking.</p>
+    </div>
+
+    <div class="feature-card">
+        <h2>Your Learning Companion</h2>
+        <p>Think of our AI tutor as a patient study partner who's always ready to help. Get unstuck on assignments, explore new concepts, and develop your programming skills at your own pace.</p>
+    </div>
+</div>
+
+<div class="cta-section">
+    <h2>Ready to start learning?</h2>
+    <a href="{{ url_for('tutor') }}" class="cta-button">Start Learning Now</a>
+</div>
 {% endblock %}
 
