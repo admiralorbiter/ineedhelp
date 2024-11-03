@@ -66,7 +66,7 @@ def init_routes(app):
             # Create associated student profile
             student_profile = StudentProfile(
                 user_id=new_student.id,
-                daily_question_limit=5,
+                daily_question_limit=20,
                 questions_asked_today=0
             )
             db.session.add(student_profile)

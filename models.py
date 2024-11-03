@@ -77,7 +77,7 @@ class StudentProfile(db.Model):
 
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), primary_key=True)
     teacher_id = db.Column(db.Integer, db.ForeignKey('users.id'))
-    daily_question_limit = db.Column(db.Integer, default=5)
+    daily_question_limit = db.Column(db.Integer, default=20)
     questions_asked_today = db.Column(db.Integer, default=0)
     last_question_reset = db.Column(db.Date, default=date.today)
 
