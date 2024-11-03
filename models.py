@@ -102,6 +102,26 @@ class StudentProfile(db.Model):
     def __repr__(self):
         return f'<StudentProfile {self.user.username}>'
 
+    def can_ask_question(self):
+        """Check if student can ask more questions today."""
+        today = date.today()
+        
+        # Reset counter if it's a new day
+        if self.last_question_reset < today:
+            self.questions_asked_today = 0
+            self.last_question_reset = today
+            db.session.commit()
+            
+        return self.questions_asked_today < self.daily_question_limit
+    
+    def increment_question_count(self):
+        """Increment the questions asked counter."""
+        if self.can_ask_question():
+            self.questions_asked_today += 1
+            db.session.commit()
+            return True
+        return False
+
 # TeacherProfile model
 class TeacherProfile(db.Model):
     __tablename__ = 'teacher_profiles'

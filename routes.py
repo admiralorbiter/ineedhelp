@@ -51,7 +51,7 @@ def init_routes(app):
         try:
             # Create new student user
             new_student = User(
-                username=request.form['email'],  # Using email as username
+                username=request.form['email'],
                 email=request.form['email'],
                 first_name=request.form['firstName'],
                 last_name=request.form['lastName'],
@@ -59,15 +59,24 @@ def init_routes(app):
                 role=UserRole.STUDENT
             )
 
-            # Add and commit to database
+            # Add user first
             db.session.add(new_student)
-            db.session.commit()
+            db.session.flush()  # This assigns the ID to new_student
 
+            # Create associated student profile
+            student_profile = StudentProfile(
+                user_id=new_student.id,
+                daily_question_limit=5,
+                questions_asked_today=0
+            )
+            db.session.add(student_profile)
+            
+            db.session.commit()
             flash('Student account created successfully!', 'success')
         except Exception as e:
             db.session.rollback()
             flash('Error creating student account. Please try again.', 'danger')
-            print(f"Error: {str(e)}")  # For debugging
+            print(f"Error: {str(e)}")
 
         return redirect(url_for('admin_dashboard'))
 
@@ -118,6 +127,12 @@ def init_routes(app):
                 print(f"Error creating student profile: {str(e)}")
                 return jsonify({'error': 'Failed to create student profile'}), 500
 
+        # Check quota before processing message
+        if not current_user.student_profile.can_ask_question():
+            return jsonify({
+                'error': 'Daily question limit reached. Please try again tomorrow.'
+            }), 429  # 429 Too Many Requests
+
         data = request.get_json()
         message_content = data.get('message')
         conversation_id = data.get('conversation_id')
@@ -128,6 +143,12 @@ def init_routes(app):
         try:
             # Create new conversation if none exists
             if not conversation_id:
+                # Increment question count before creating new conversation
+                if not current_user.student_profile.increment_question_count():
+                    return jsonify({
+                        'error': 'Daily question limit reached. Please try again tomorrow.'
+                    }), 429
+
                 conversation = Conversation(student_id=current_user.student_profile.user_id)
                 db.session.add(conversation)
                 db.session.flush()
@@ -281,3 +302,29 @@ def init_routes(app):
         return render_template('student_history.html', 
                              student=student, 
                              conversations=conversations)
+
+    @app.route('/adjust_questions/<int:student_id>/<action>', methods=['POST'])
+    @login_required
+    def adjust_questions(student_id, action):
+        if current_user.role != UserRole.TEACHER:
+            flash('Access denied: You are not authorized to adjust questions.', 'danger')
+            return redirect(url_for('index'))
+        
+        student = User.query.get_or_404(student_id)
+        if not student.student_profile:
+            flash('Student profile not found.', 'danger')
+            return redirect(url_for('admin_dashboard'))
+        
+        try:
+            if action == 'add':
+                # Add 5 to daily limit
+                student.student_profile.daily_question_limit += 5
+                flash(f'Added 5 questions to {student.first_name}\'s daily limit.', 'success')
+            
+            db.session.commit()
+        except Exception as e:
+            db.session.rollback()
+            flash('Error adjusting questions. Please try again.', 'danger')
+            print(f"Error: {str(e)}")
+        
+        return redirect(url_for('admin_dashboard'))
