@@ -103,3 +103,48 @@ p {
 .shadow-sm {
     box-shadow: 0 0.125rem 0.25rem rgba(26, 20, 35, 0.075) !important;
 }
+
+/* Upload Component Styling */
+.upload-container {
+    width: 100%;
+    padding: 1rem;
+}
+
+.upload-area {
+    border: 2px dashed var(--eggplant);
+    border-radius: 8px;
+    padding: 2rem 1rem;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background-color: rgba(119, 76, 96, 0.05);
+}
+
+.upload-area:hover {
+    border-color: var(--dark-purple);
+    background-color: rgba(119, 76, 96, 0.1);
+}
+
+.upload-area.dragover {
+    border-color: var(--dark-purple);
+    background-color: rgba(119, 76, 96, 0.15);
+}
+
+.upload-icon {
+    font-size: 2rem;
+    color: var(--eggplant);
+    margin-bottom: 1rem;
+}
+
+.file-info {
+    margin-top: 1rem;
+    padding: 0.5rem;
+    display: none;
+}
+
+.file-info.active {
+    display: block;
+    background-color: rgba(234, 205, 194, 0.2);
+    border-radius: 4px;
+    border: 1px solid var(--pale-dogwood);
+}

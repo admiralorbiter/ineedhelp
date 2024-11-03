@@ -7,6 +7,8 @@ from datetime import datetime, timezone
 import json
 from openai import OpenAI
 import os
+import csv
+from io import StringIO
 
 def init_routes(app):
     @app.route('/')
@@ -328,3 +330,74 @@ def init_routes(app):
             print(f"Error: {str(e)}")
         
         return redirect(url_for('admin_dashboard'))
+
+    @app.route('/bulk_create_students', methods=['POST'])
+    @login_required
+    def bulk_create_students():
+        if current_user.role != UserRole.TEACHER:
+            return jsonify({'error': 'Unauthorized'}), 403
+
+        if 'file' not in request.files:
+            return jsonify({'error': 'No file provided'}), 400
+
+        file = request.files['file']
+        if file.filename == '':
+            return jsonify({'error': 'No file selected'}), 400
+
+        if not file.filename.endswith('.csv'):
+            return jsonify({'error': 'File must be CSV format'}), 400
+
+        try:
+            # Read CSV file
+            stream = StringIO(file.stream.read().decode("UTF8"), newline=None)
+            csv_reader = csv.reader(stream)
+            
+            success_count = 0
+            error_count = 0
+            errors = []
+
+            for row in csv_reader:
+                try:
+                    if len(row) != 4:
+                        continue
+                    
+                    first_name, last_name, email, password = row
+                    
+                    # Create new student user
+                    new_student = User(
+                        username=email,
+                        email=email,
+                        first_name=first_name,
+                        last_name=last_name,
+                        password_hash=generate_password_hash(password),
+                        role=UserRole.STUDENT
+                    )
+
+                    db.session.add(new_student)
+                    db.session.flush()
+
+                    # Create associated student profile
+                    student_profile = StudentProfile(
+                        user_id=new_student.id,
+                        daily_question_limit=20,
+                        questions_asked_today=0
+                    )
+                    db.session.add(student_profile)
+                    success_count += 1
+                    
+                except Exception as e:
+                    error_count += 1
+                    errors.append(f"Error with {email}: {str(e)}")
+                    continue
+
+            db.session.commit()
+            
+            return jsonify({
+                'success': True,
+                'message': f'Successfully created {success_count} students. {error_count} errors.',
+                'errors': errors
+            })
+
+        except Exception as e:
+            db.session.rollback()
+            return jsonify({'error': str(e)}), 500
