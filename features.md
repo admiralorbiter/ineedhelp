@@ -32,13 +32,13 @@
 
 ### 1. Enhanced Conversation Management
 - ✅ Long-term context management
-  - Dynamic token-aware context window
-  - Automatic conversation summarization
-  - Recent message history preservation
+    - Dynamic token-aware context window
+    - Automatic conversation summarization
+    - Recent message history preservation
 - 🔬 Vector-based retrieval system for past conversations
-  - Document parsing & chunking (~500 tokens)
-  - Embeddings generation (OpenAI/local models)
-  - Top-N results retrieval
+    - Document parsing & chunking (~500 tokens)
+    - Embeddings generation (OpenAI/local models)
+    - Top-N results retrieval
 - ✅ Knowledge base integration
     - Relational content store (PostgreSQL)
     - Vector database for semantic search
