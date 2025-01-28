@@ -7,9 +7,9 @@
 {% endblock %}
 
 {% block content %}
-<div class="chat-container">
+<div class="with-sidebar">
     <!-- Sidebar for chat history -->
-    <div class="chat-sidebar">
+    <div class="sidebar chat-sidebar">
         <div class="history-header">
             <h3>Chat History</h3>
             <button id="new-chat-btn" class="new-chat-button">New Chat</button>
@@ -25,7 +25,7 @@
     </div>
 
     <!-- Main chat area -->
-    <div class="chat-main">
+    <div class="main-content chat-main">
         <div class="chat-messages" id="chat-messages">
             {% for message in messages %}
             <div class="message {% if message.role == 'assistant' %}assistant{% else %}user{% endif %}">
@@ -36,7 +36,6 @@
             {% endfor %}
         </div>
         
-        <!-- Chat input form -->
         <form class="chat-input-form" id="chat-form">
             <div class="input-container">
                 <textarea 
