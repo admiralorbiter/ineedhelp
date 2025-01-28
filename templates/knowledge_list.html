@@ -23,7 +23,7 @@
                     <td>{{ entry.tags|join(', ') }}</td>
                     <td>
                         <button class="btn btn-sm btn-primary" onclick="editEntry({{ entry.id }})">Edit</button>
-                        <form method="POST" action="{{ url_for('delete_knowledge', entry_id=entry.id) }}" class="d-inline">
+                        <form method="POST" action="{{ url_for('knowledge.delete', entry_id=entry.id) }}" class="d-inline">
                             <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure?')">Delete</button>
                         </form>
                     </td>

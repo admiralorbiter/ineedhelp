@@ -5,9 +5,9 @@ from utils.embeddings import update_entry_embedding
 
 knowledge_bp = Blueprint('knowledge', __name__, url_prefix='/knowledge')
 
-@knowledge_bp.route('/list')
+@knowledge_bp.route('/')
 @login_required
-def list_knowledge():
+def list():
     if current_user.role != UserRole.TEACHER:
         flash('Access denied', 'danger')
         return redirect(url_for('auth.index'))
@@ -17,7 +17,7 @@ def list_knowledge():
 
 @knowledge_bp.route('/add', methods=['POST'])
 @login_required
-def add_knowledge():
+def add():
     if current_user.role != UserRole.TEACHER:
         return jsonify({'error': 'Unauthorized'}), 403
     
@@ -44,7 +44,7 @@ def add_knowledge():
 
 @knowledge_bp.route('/delete/<int:entry_id>', methods=['POST'])
 @login_required
-def delete_knowledge(entry_id):
+def delete(entry_id):
     if current_user.role != UserRole.TEACHER:
         return jsonify({'error': 'Unauthorized'}), 403
     

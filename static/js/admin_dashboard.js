@@ -55,7 +55,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const formData = new FormData();
         formData.append('file', file);
 
-        fetch('/bulk_create_students', {
+        fetch('/admin/bulk_create_students', {
             method: 'POST',
             body: formData
         })

@@ -1,31 +1,31 @@
 <nav class="navbar navbar-expand-lg custom-nav">
   <div class="container-fluid">
-    <a class="navbar-brand" href="/">I Need Help!</a>
+    <a class="navbar-brand" href="{{ url_for('auth.index') }}">I Need Help!</a>
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
       <span class="navbar-toggler-icon"></span>
     </button>
     <div class="collapse navbar-collapse" id="navbarNav">
       <ul class="navbar-nav ms-auto">
         <li class="nav-item">
-          <a class="nav-link" href="/tutor">Tutor</a>
+          <a class="nav-link" href="{{ url_for('tutor.chat') }}">Tutor</a>
         </li>
         {% if current_user.is_authenticated %}
           {% if current_user.role.value == 'teacher' %}
           <li class="nav-item">
-            <a class="nav-link" href="/admin/dashboard">Dashboard</a>
+            <a class="nav-link" href="{{ url_for('admin.dashboard') }}">Dashboard</a>
           </li>
-            <li class="nav-item">
-              <a class="nav-link" href="{{ url_for('list_knowledge') }}">Knowledge Base</a>
-            </li>
+          <li class="nav-item">
+            <a class="nav-link" href="{{ url_for('knowledge.list') }}">Knowledge Base</a>
+          </li>
           {% endif %}
         {% endif %}
         {% if current_user.is_authenticated %}
           <li class="nav-item">
-            <a class="nav-link" href="/logout">Logout</a>
+            <a class="nav-link" href="{{ url_for('auth.logout') }}">Logout</a>
           </li>
         {% else %}
           <li class="nav-item">
-            <a class="nav-link" href="/login">Login</a>
+            <a class="nav-link" href="{{ url_for('auth.login') }}">Login</a>
           </li>
         {% endif %}
       </ul>
