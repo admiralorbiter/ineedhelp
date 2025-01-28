@@ -159,23 +159,36 @@ def init_routes(app):
                 if not conversation or conversation.student_id != current_user.student_profile.user_id:
                     return jsonify({'error': 'Invalid conversation'}), 404
 
-            # Save user message
-            user_message = Message(
-                conversation_id=conversation.id,
-                sender_type=SenderType.STUDENT,
-                sender_id=current_user.id,
-                message_content=message_content
-            )
-            db.session.add(user_message)
+            # Get recent conversation history (last 10 messages)
+            recent_messages = []
+            if conversation_id:
+                recent_messages = Message.query.filter_by(conversation_id=conversation_id)\
+                    .order_by(Message.timestamp.desc())\
+                    .limit(10)\
+                    .all()
+                recent_messages.reverse()  # Put in chronological order
+
+            # Construct messages array for OpenAI
+            messages = [
+                {"role": "system", "content": "As a Python programming tutor, your role is to assist students in understanding concepts and solving problems without providing direct answers. Use the Socratic method by asking guiding questions that encourage critical thinking. Provide helpful hints, clarify concepts, and break down complex ideas into simpler parts. Focus on fostering the student's problem-solving skills and understanding of Python programming."}
+            ]
+
+            # Add conversation history
+            for msg in recent_messages:
+                role = "assistant" if msg.sender_type == SenderType.AI_TUTOR else "user"
+                messages.append({
+                    "role": role,
+                    "content": msg.message_content
+                })
+
+            # Add the current message
+            messages.append({"role": "user", "content": message_content})
 
             # Make OpenAI API call
             client = OpenAI(api_key=os.getenv('OPENAI_API_KEY'))
             response = client.chat.completions.create(
                 model="gpt-3.5-turbo",
-                messages=[
-                    {"role": "system", "content": "As a Python programming tutor, your role is to assist students in understanding concepts and solving problems without providing direct answers. Use the Socratic method by asking guiding questions that encourage critical thinking. Provide helpful hints, clarify concepts, and break down complex ideas into simpler parts. Focus on fostering the student's problem-solving skills and understanding of Python programming."},
-                    {"role": "user", "content": message_content}
-                ]
+                messages=messages
             )
             
             ai_response = response.choices[0].message.content
