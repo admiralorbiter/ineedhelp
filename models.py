@@ -18,6 +18,31 @@ class SenderType(str, Enum):
     AI_TUTOR = 'ai_tutor'
     TEACHER = 'teacher'
 
+# Add this mixin class for shared functionality
+class QuestionLimitMixin:
+    daily_question_limit = db.Column(db.Integer, nullable=False)
+    questions_asked_today = db.Column(db.Integer, default=0)
+    last_question_reset = db.Column(db.Date, default=date.today)
+
+    def can_ask_question(self):
+        """Check if user can ask more questions today."""
+        today = date.today()
+        
+        if self.last_question_reset < today:
+            self.questions_asked_today = 0
+            self.last_question_reset = today
+            db.session.commit()
+            
+        return self.questions_asked_today < self.daily_question_limit
+    
+    def increment_question_count(self):
+        """Increment the questions asked counter."""
+        if self.can_ask_question():
+            self.questions_asked_today += 1
+            db.session.commit()
+            return True
+        return False
+
 # User model
 class User(db.Model, UserMixin):
     __tablename__ = 'users'
@@ -72,14 +97,12 @@ class User(db.Model, UserMixin):
         return f'<User {self.username}>'
 
 # StudentProfile model
-class StudentProfile(db.Model):
+class StudentProfile(db.Model, QuestionLimitMixin):
     __tablename__ = 'student_profiles'
 
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), primary_key=True)
     teacher_id = db.Column(db.Integer, db.ForeignKey('users.id'))
     daily_question_limit = db.Column(db.Integer, default=20)
-    questions_asked_today = db.Column(db.Integer, default=0)
-    last_question_reset = db.Column(db.Date, default=date.today)
 
     # Relationships
     user = db.relationship(
@@ -93,40 +116,15 @@ class StudentProfile(db.Model):
         foreign_keys=[teacher_id]
     )
 
-    conversations = db.relationship(
-        'Conversation',
-        back_populates='student',
-        foreign_keys='Conversation.student_id'
-    )
-
     def __repr__(self):
         return f'<StudentProfile {self.user.username}>'
 
-    def can_ask_question(self):
-        """Check if student can ask more questions today."""
-        today = date.today()
-        
-        # Reset counter if it's a new day
-        if self.last_question_reset < today:
-            self.questions_asked_today = 0
-            self.last_question_reset = today
-            db.session.commit()
-            
-        return self.questions_asked_today < self.daily_question_limit
-    
-    def increment_question_count(self):
-        """Increment the questions asked counter."""
-        if self.can_ask_question():
-            self.questions_asked_today += 1
-            db.session.commit()
-            return True
-        return False
-
 # TeacherProfile model
-class TeacherProfile(db.Model):
+class TeacherProfile(db.Model, QuestionLimitMixin):
     __tablename__ = 'teacher_profiles'
 
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), primary_key=True)
+    daily_question_limit = db.Column(db.Integer, default=50)
 
     # Relationships
     user = db.relationship(
@@ -143,16 +141,12 @@ class Conversation(db.Model):
     __tablename__ = 'conversations'
 
     id = db.Column(db.Integer, primary_key=True)
-    student_id = db.Column(db.Integer, db.ForeignKey('student_profiles.user_id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
     updated_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc), nullable=False)
 
-    # Relationships
-    student = db.relationship(
-        'StudentProfile',
-        back_populates='conversations',
-        foreign_keys=[student_id]
-    )
+    # Update relationships
+    user = db.relationship('User', backref='conversations')
     messages = db.relationship(
         'Message',
         back_populates='conversation',
@@ -160,7 +154,7 @@ class Conversation(db.Model):
     )
 
     def __repr__(self):
-        return f'<Conversation {self.id} by Student {self.student.user.username}>'
+        return f'<Conversation {self.id} by User {self.user.username}>'
 
 # Message model
 class Message(db.Model):

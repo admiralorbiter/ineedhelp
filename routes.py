@@ -1,6 +1,6 @@
 from flask import render_template, request, redirect, url_for, flash, jsonify
 from flask_login import login_user, logout_user, login_required, current_user
-from models import StudentProfile, User, UserRole, db, Conversation, Message, SenderType
+from models import StudentProfile, User, UserRole, db, Conversation, Message, SenderType, TeacherProfile
 from werkzeug.security import check_password_hash, generate_password_hash
 from forms import LoginForm
 from datetime import datetime, timezone
@@ -27,9 +27,9 @@ def init_routes(app):
                 flash('Logged in successfully.', 'success')
                 # Redirect based on user role
                 if user.role == UserRole.TEACHER:
-                    return redirect(url_for('admin_dashboard'))
-                elif user.role == UserRole.STUDENT:
-                    return redirect(url_for('tutor'))
+                    return redirect(url_for('admin_dashboard'))  # Teachers still see admin first
+                else:
+                    return redirect(url_for('tutor'))  # All other roles go to tutor
             else:
                 flash('Invalid username or password.', 'danger')
         return render_template('login.html', form=form)
@@ -94,48 +94,60 @@ def init_routes(app):
     @app.route('/tutor')
     @login_required
     def tutor():
-        # Get user's chat history
-        chat_history = []
-        if current_user.student_profile:
-            conversations = Conversation.query.filter_by(
-                student_id=current_user.student_profile.user_id
-            ).order_by(Conversation.updated_at.desc()).all()
-            
-            chat_history = [{
-                'id': conv.id,
-                'title': conv.messages[0].message_content[:30] + "..." if conv.messages else "New Chat",
-                'date': conv.created_at.strftime("%Y-%m-%d %H:%M")
-            } for conv in conversations]
-
-        # For now, return empty messages for new chat
-        messages = []
+        # Get the appropriate profile based on role
+        profile = None
+        if current_user.role == UserRole.STUDENT:
+            profile = current_user.student_profile
+            if not profile:
+                profile = StudentProfile(user_id=current_user.id)
+                db.session.add(profile)
+                db.session.commit()  # Commit immediately after creating profile
+        else:  # Teacher or other roles
+            profile = current_user.teacher_profile
+            if not profile:
+                profile = TeacherProfile(user_id=current_user.id)
+                db.session.add(profile)
+                db.session.commit()  # Commit immediately after creating profile
         
-        return render_template('tutor.html', chat_history=chat_history, messages=messages)
+        # Get user's chat history
+        conversations = Conversation.query.filter_by(
+            user_id=current_user.id
+        ).order_by(Conversation.updated_at.desc()).all()
+        
+        chat_history = [{
+            'id': conv.id,
+            'title': conv.messages[0].message_content[:30] + "..." if conv.messages else "New Chat",
+            'date': conv.created_at.strftime("%Y-%m-%d %H:%M")
+        } for conv in conversations]
+
+        return render_template('tutor.html', chat_history=chat_history, messages=[])
 
     @app.route('/tutor/send_message', methods=['POST'])
     @login_required
     def send_message():
-        # Check if user is a student
-        if current_user.role != UserRole.STUDENT:
-            return jsonify({'error': 'Only students can use the tutor'}), 403
-
-        # Ensure student profile exists
-        if not hasattr(current_user, 'student_profile') or not current_user.student_profile:
-            # Create student profile if it doesn't exist
-            student_profile = StudentProfile(user_id=current_user.id)
-            db.session.add(student_profile)
-            try:
+        # Get the appropriate profile
+        profile = None
+        if current_user.role == UserRole.STUDENT:
+            profile = current_user.student_profile
+            if not profile:
+                profile = StudentProfile(user_id=current_user.id)
+                db.session.add(profile)
                 db.session.commit()
-            except Exception as e:
-                db.session.rollback()
-                print(f"Error creating student profile: {str(e)}")
-                return jsonify({'error': 'Failed to create student profile'}), 500
+        else:
+            profile = current_user.teacher_profile
+            if not profile:
+                profile = TeacherProfile(user_id=current_user.id)
+                db.session.add(profile)
+                db.session.commit()
+
+        if not profile:
+            return jsonify({'error': 'Profile not found'}), 404
 
         # Check quota before processing message
-        if not current_user.student_profile.can_ask_question():
+        if not profile.can_ask_question():
             return jsonify({
-                'error': 'Daily question limit reached. Please try again tomorrow.'
-            }), 429  # 429 Too Many Requests
+                'error': f'Daily question limit ({profile.daily_question_limit}) reached. Please try again tomorrow.'
+            }), 429
 
         data = request.get_json()
         message_content = data.get('message')
@@ -147,18 +159,17 @@ def init_routes(app):
         try:
             # Create new conversation if none exists
             if not conversation_id:
-                # Increment question count before creating new conversation
-                if not current_user.student_profile.increment_question_count():
+                if not profile.increment_question_count():
                     return jsonify({
                         'error': 'Daily question limit reached. Please try again tomorrow.'
                     }), 429
 
-                conversation = Conversation(student_id=current_user.student_profile.user_id)
+                conversation = Conversation(user_id=current_user.id)
                 db.session.add(conversation)
                 db.session.flush()
             else:
                 conversation = Conversation.query.get(conversation_id)
-                if not conversation or conversation.student_id != current_user.student_profile.user_id:
+                if not conversation or conversation.user_id != current_user.id:
                     return jsonify({'error': 'Invalid conversation'}), 404
 
             # Get recent conversation history
@@ -247,7 +258,7 @@ def init_routes(app):
         conversation = Conversation.query.get_or_404(conversation_id)
         
         # Verify the conversation belongs to the current user
-        if conversation.student_id != current_user.student_profile.user_id:
+        if conversation.user_id != current_user.id:
             return jsonify({'error': 'Unauthorized'}), 403
 
         messages = [{
@@ -326,7 +337,7 @@ def init_routes(app):
         
         # Get all conversations for this student
         conversations = Conversation.query.filter_by(
-            student_id=student.student_profile.user_id
+            user_id=student.id  # Using user_id instead of student_id
         ).order_by(Conversation.created_at.desc()).all()
         
         return render_template('student_history.html', 
