@@ -228,3 +228,15 @@ class AuditLog(db.Model):
     def __repr__(self):
         return f'<AuditLog {self.action} by User {self.user.username}>'
 
+class KnowledgeBaseEntry(db.Model):
+    __tablename__ = 'knowledge_base'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(256), nullable=False)
+    content = db.Column(db.Text, nullable=False)
+    category = db.Column(db.String(128))
+    tags = db.Column(db.JSON)
+    embedding = db.Column(db.JSON)  # Store vector embeddings
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = db.Column(db.DateTime, onupdate=lambda: datetime.now(timezone.utc))
+

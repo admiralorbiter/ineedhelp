@@ -35,8 +35,15 @@
   - Dynamic token-aware context window
   - Automatic conversation summarization
   - Recent message history preservation
-- ❌ Vector-based retrieval system for past conversations
-- ❌ Knowledge base integration
+- 🔬 Vector-based retrieval system for past conversations
+  - Document parsing & chunking (~500 tokens)
+  - Embeddings generation (OpenAI/local models)
+  - Top-N results retrieval
+- ✅ Knowledge base integration
+    - Relational content store (PostgreSQL)
+    - Vector database for semantic search
+    - Contextual query processing
+    - Metadata tagging system
 
 ### 2. Advanced Tutoring Features
 - ❌ Difficulty level adjustment
@@ -55,8 +62,18 @@
 ### 4. Content Management
 - ❌ Programming documentation integration
 - ❌ Custom prompt management system
+  - Dynamic prompt templates
+  - Context-aware prompt selection
+  - System instruction management
 - ❌ Resource library
+  - Structured content organization
+  - Difficulty-based content tagging
+  - Version control for resources
 - ❌ Example repository
+- ❌ Admin content management interface
+  - Create/edit/delete KB entries
+  - Content re-indexing tools
+  - Metadata management
 
 ### 5. Advanced UI Features
 - ❌ Code editor integration
@@ -84,10 +101,12 @@
    - Add syntax highlighting for multiple programming languages
    - Improve code block display
 
-2. Vector Database Integration
-   - Set up vector database for conversation storage
-   - Implement semantic search for past conversations
-   - Create efficient context retrieval system
+2. Research Spike: Vector Database Integration
+   - Evaluate different embedding approaches
+   - Compare performance against current context management
+   - Benchmark vector database options (Pinecone, Weaviate, etc.)
+   - Define testing methodology for comparison
+   - Cost-benefit analysis for implementation
 
 3. Interactive Code Environment
    - Add in-browser code editor
@@ -114,14 +133,20 @@
    - Implement peer review system
    - Create discussion forums
 
-## Technical Requirements 🔧
+## Technical Requirements 🧰
 
 ### Backend
 - Python 3.8+
 - Flask web framework
 - PostgreSQL database
+  - Relational content store
+  - User/session management
+  - Analytics data
 - OpenAI API integration
 - Vector database (planned)
+  - Document embeddings storage
+  - Semantic search capabilities
+- Redis for caching (planned)
 
 ### Frontend
 - HTML5/CSS3
@@ -133,3 +158,4 @@
 - Heroku hosting
 - AWS S3 for storage (planned)
 - Redis for caching (planned)
+- Vector database service (Pinecone/Weaviate)

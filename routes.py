@@ -1,6 +1,6 @@
 from flask import render_template, request, redirect, url_for, flash, jsonify
 from flask_login import login_user, logout_user, login_required, current_user
-from models import StudentProfile, User, UserRole, db, Conversation, Message, SenderType, TeacherProfile
+from models import StudentProfile, User, UserRole, db, Conversation, Message, SenderType, TeacherProfile, KnowledgeBaseEntry
 from werkzeug.security import check_password_hash, generate_password_hash
 from forms import LoginForm
 from datetime import datetime, timezone
@@ -11,6 +11,8 @@ import csv
 from io import StringIO
 from typing import List, Dict
 import tiktoken
+
+from utils.embeddings import find_relevant_knowledge, update_entry_embedding
 
 def init_routes(app):
     @app.route('/')
@@ -125,6 +127,56 @@ def init_routes(app):
     @app.route('/tutor/send_message', methods=['POST'])
     @login_required
     def send_message():
+        message = request.json.get('message')
+        conversation_id = request.json.get('conversation_id')
+        
+        # Load Socratic prompt
+        try:
+            with open('socratic_prompt.md', 'r') as f:
+                socratic_prompt = f.read()
+        except Exception as e:
+            print(f"Error loading Socratic prompt: {str(e)}")
+            socratic_prompt = "You are a Socratic-style tutor specializing in Python programming."
+        
+        # Find relevant knowledge base entries
+        relevant_knowledge = find_relevant_knowledge(message)
+        
+        # Add knowledge context to the prompt
+        knowledge_context = ""
+        if relevant_knowledge:
+            knowledge_context = "\n\nRelevant information from our knowledge base:\n"
+            for entry in relevant_knowledge:
+                knowledge_context += f"- {entry.title}: {entry.content}\n"
+        
+        # Combine Socratic prompt with knowledge context in a single system message
+        combined_prompt = f"""{socratic_prompt}
+
+{knowledge_context}
+
+Remember:
+1. Always ask probing questions instead of giving direct answers
+2. Guide the student to discover the solution themselves
+3. If you have relevant knowledge base information, use it to form questions that lead the student to understand the concept
+4. Break down complex problems into smaller, manageable questions
+5. Validate student's correct thinking and gently correct misconceptions through questions"""
+
+        # Build the messages list from conversation history
+        messages = [{"role": "system", "content": combined_prompt}]  # Single, comprehensive system message
+        if conversation_id:
+            conversation = Conversation.query.get(conversation_id)
+            if conversation:
+                for msg in conversation.messages:
+                    role = "assistant" if msg.sender_type == SenderType.AI_TUTOR else "user"
+                    messages.append({
+                        "role": role,
+                        "content": msg.message_content
+                    })
+        
+        messages.append({
+            "role": "user",
+            "content": message
+        })
+        
         # Get the appropriate profile
         profile = None
         if current_user.role == UserRole.STUDENT:
@@ -143,19 +195,6 @@ def init_routes(app):
         if not profile:
             return jsonify({'error': 'Profile not found'}), 404
 
-        # Check quota before processing message
-        if not profile.can_ask_question():
-            return jsonify({
-                'error': f'Daily question limit ({profile.daily_question_limit}) reached. Please try again tomorrow.'
-            }), 429
-
-        data = request.get_json()
-        message_content = data.get('message')
-        conversation_id = data.get('conversation_id')
-
-        if not message_content:
-            return jsonify({'error': 'Message content is required'}), 400
-
         try:
             # Create new conversation if none exists
             if not conversation_id:
@@ -172,49 +211,21 @@ def init_routes(app):
                 if not conversation or conversation.user_id != current_user.id:
                     return jsonify({'error': 'Invalid conversation'}), 404
 
-            # Get recent conversation history
-            messages = [
-                {"role": "system", "content": "As a Python programming tutor, your role is to assist students in understanding concepts and solving problems without providing direct answers. Use the Socratic method by asking guiding questions that encourage critical thinking. Provide helpful hints, clarify concepts, and break down complex ideas into simpler parts. Focus on fostering the student's problem-solving skills and understanding of Python programming."}
-            ]
+            # Save user's message first
+            user_message = Message(
+                conversation_id=conversation.id,
+                sender_type=SenderType.STUDENT,
+                sender_id=current_user.id,
+                message_content=message
+            )
+            db.session.add(user_message)
+            db.session.flush()
 
-            if conversation_id:
-                # Get all messages from the conversation
-                recent_messages = Message.query.filter_by(conversation_id=conversation_id)\
-                    .order_by(Message.timestamp.desc())\
-                    .all()
-                
-                # Check if we need a summary
-                if len(recent_messages) > 10:
-                    summary = create_summary(conversation_id)
-                    if summary:
-                        messages.append({
-                            "role": "system",
-                            "content": f"Previous conversation summary: {summary}"
-                        })
-                
-                # Add recent messages, checking token count
-                for msg in reversed(recent_messages[:10]):  # Process most recent 10 messages
-                    role = "assistant" if msg.sender_type == SenderType.AI_TUTOR else "user"
-                    new_message = {
-                        "role": role,
-                        "content": msg.message_content
-                    }
-                    
-                    # Check if adding this message would exceed token limit
-                    MAX_TOKENS = 3000  # Leave room for response
-                    if count_tokens(messages + [new_message]) < MAX_TOKENS:
-                        messages.append(new_message)
-                    else:
-                        break
-
-            # Add the current message
-            messages.append({"role": "user", "content": message_content})
-
-            # Make OpenAI API call
+            # Get OpenAI response
             client = OpenAI(api_key=os.getenv('OPENAI_API_KEY'))
             response = client.chat.completions.create(
                 model="gpt-3.5-turbo",
-                messages=messages
+                messages=messages  # Now includes system prompt, history, knowledge context, and user message
             )
             
             ai_response = response.choices[0].message.content
@@ -238,7 +249,7 @@ def init_routes(app):
                 'messages': [
                     {
                         'role': 'user',
-                        'content': message_content
+                        'content': message
                     },
                     {
                         'role': 'assistant',
@@ -440,6 +451,60 @@ def init_routes(app):
         except Exception as e:
             db.session.rollback()
             return jsonify({'error': str(e)}), 500
+
+    @app.route('/knowledge/list')
+    @login_required
+    def list_knowledge():
+        if current_user.role != UserRole.TEACHER:
+            flash('Access denied', 'danger')
+            return redirect(url_for('index'))
+        
+        entries = KnowledgeBaseEntry.query.all()
+        return render_template('knowledge_list.html', entries=entries)
+
+    @app.route('/knowledge/add', methods=['POST'])
+    @login_required
+    def add_knowledge():
+        if current_user.role != UserRole.TEACHER:
+            return jsonify({'error': 'Unauthorized'}), 403
+        
+        try:
+            entry = KnowledgeBaseEntry(
+                title=request.form['title'],
+                content=request.form['content'],
+                category=request.form['category'],
+                tags=request.form['tags'].split(',') if request.form['tags'] else []
+            )
+            db.session.add(entry)
+            db.session.flush()
+            
+            # Create and store embedding
+            update_entry_embedding(entry)
+            
+            db.session.commit()
+            flash('Knowledge base entry added successfully', 'success')
+            return redirect(url_for('list_knowledge'))
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Error adding entry: {str(e)}', 'danger')
+            return redirect(url_for('admin_dashboard'))
+
+    @app.route('/knowledge/delete/<int:entry_id>', methods=['POST'])
+    @login_required
+    def delete_knowledge(entry_id):
+        if current_user.role != UserRole.TEACHER:
+            return jsonify({'error': 'Unauthorized'}), 403
+        
+        try:
+            entry = KnowledgeBaseEntry.query.get_or_404(entry_id)
+            db.session.delete(entry)
+            db.session.commit()
+            flash('Knowledge base entry deleted successfully', 'success')
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Error deleting entry: {str(e)}', 'danger')
+        
+        return redirect(url_for('list_knowledge'))
 
 def count_tokens(messages: List[Dict]) -> int:
     """Count tokens in a list of messages."""

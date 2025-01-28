@@ -9,13 +9,16 @@
         <li class="nav-item">
           <a class="nav-link" href="/tutor">Tutor</a>
         </li>
-        <li class="nav-item">
-          {% if current_user.is_authenticated %}
-            {% if current_user.role.value == 'teacher' %}
-              <a class="nav-link" href="/admin/dashboard">Dashboard</a>
-            {% endif %}
+        {% if current_user.is_authenticated %}
+          {% if current_user.role.value == 'teacher' %}
+          <li class="nav-item">
+            <a class="nav-link" href="/admin/dashboard">Dashboard</a>
+          </li>
+            <li class="nav-item">
+              <a class="nav-link" href="{{ url_for('list_knowledge') }}">Knowledge Base</a>
+            </li>
           {% endif %}
-        </li>
+        {% endif %}
         {% if current_user.is_authenticated %}
           <li class="nav-item">
             <a class="nav-link" href="/logout">Logout</a>

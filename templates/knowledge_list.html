@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+
+{% block title %}Knowledge Base Management{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1>Knowledge Base Entries</h1>
+    <div class="table-responsive">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Title</th>
+                    <th>Category</th>
+                    <th>Tags</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for entry in entries %}
+                <tr>
+                    <td>{{ entry.title }}</td>
+                    <td>{{ entry.category }}</td>
+                    <td>{{ entry.tags|join(', ') }}</td>
+                    <td>
+                        <button class="btn btn-sm btn-primary" onclick="editEntry({{ entry.id }})">Edit</button>
+                        <form method="POST" action="{{ url_for('delete_knowledge', entry_id=entry.id) }}" class="d-inline">
+                            <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure?')">Delete</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %} 
