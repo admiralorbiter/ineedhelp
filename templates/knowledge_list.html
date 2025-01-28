@@ -2,14 +2,82 @@
 
 {% block title %}Knowledge Base Management{% endblock %}
 
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/knowledge.css') }}">
+{% endblock %}
+
 {% block content %}
 <div class="container mt-4">
     <h1>Knowledge Base Entries</h1>
+    
+    <!-- Add Entry Forms -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Add Text Entry</h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('knowledge.add') }}">
+                        <div class="mb-3">
+                            <label for="title" class="form-label">Title</label>
+                            <input type="text" class="form-control" id="title" name="title" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="content" class="form-label">Content</label>
+                            <textarea class="form-control" id="content" name="content" rows="4" required></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label for="category" class="form-label">Category</label>
+                            <input type="text" class="form-control" id="category" name="category">
+                        </div>
+                        <div class="mb-3">
+                            <label for="tags" class="form-label">Tags (comma-separated)</label>
+                            <input type="text" class="form-control" id="tags" name="tags">
+                        </div>
+                        <button type="submit" class="btn btn-primary">Add Text Entry</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Upload Document</h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('knowledge.add') }}" enctype="multipart/form-data">
+                        <div class="mb-3">
+                            <label for="doc-title" class="form-label">Title</label>
+                            <input type="text" class="form-control" id="doc-title" name="title" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="document" class="form-label">Document (PDF, DOCX, TXT)</label>
+                            <input type="file" class="form-control" id="document" name="document" accept=".pdf,.docx,.txt" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="doc-category" class="form-label">Category</label>
+                            <input type="text" class="form-control" id="doc-category" name="category">
+                        </div>
+                        <div class="mb-3">
+                            <label for="doc-tags" class="form-label">Tags (comma-separated)</label>
+                            <input type="text" class="form-control" id="doc-tags" name="tags">
+                        </div>
+                        <button type="submit" class="btn btn-primary">Upload Document</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Entries Table -->
     <div class="table-responsive">
         <table class="table">
             <thead>
                 <tr>
                     <th>Title</th>
+                    <th>Type</th>
                     <th>Category</th>
                     <th>Tags</th>
                     <th>Actions</th>
@@ -19,9 +87,19 @@
                 {% for entry in entries %}
                 <tr>
                     <td>{{ entry.title }}</td>
+                    <td>
+                        {% if entry.entry_type == 'document' %}
+                        <span class="badge bg-info">{{ entry.document_type }}</span>
+                        {% else %}
+                        <span class="badge bg-secondary">text</span>
+                        {% endif %}
+                    </td>
                     <td>{{ entry.category }}</td>
                     <td>{{ entry.tags|join(', ') }}</td>
                     <td>
+                        {% if entry.entry_type == 'document' %}
+                        <a href="{{ url_for('knowledge.download', entry_id=entry.id) }}" class="btn btn-sm btn-info">Download</a>
+                        {% endif %}
                         <button class="btn btn-sm btn-primary" onclick="editEntry({{ entry.id }})">Edit</button>
                         <form method="POST" action="{{ url_for('knowledge.delete', entry_id=entry.id) }}" class="d-inline">
                             <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure?')">Delete</button>

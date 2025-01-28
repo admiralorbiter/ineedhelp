@@ -10,3 +10,5 @@ gunicorn
 python-dotenv
 psycopg2-binary
 OpenAI
+PyPDF2
+python-docx

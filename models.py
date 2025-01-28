@@ -236,6 +236,9 @@ class KnowledgeBaseEntry(db.Model):
     content = db.Column(db.Text, nullable=False)
     category = db.Column(db.String(128))
     tags = db.Column(db.JSON)
+    entry_type = db.Column(db.String(50), nullable=False, default='text')  # 'text' or 'document'
+    document_path = db.Column(db.String(512))  # S3 or file system path
+    document_type = db.Column(db.String(50))  # 'pdf', 'docx', etc.
     embedding = db.Column(db.JSON)  # Store vector embeddings
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
     updated_at = db.Column(db.DateTime, onupdate=lambda: datetime.now(timezone.utc))

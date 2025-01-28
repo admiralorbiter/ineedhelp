@@ -40,6 +40,9 @@ init_routes(app)
 # Load environment variables from .env file
 load_dotenv()
 
+app.config['UPLOAD_FOLDER'] = 'uploads/documents'
+app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
+
 if __name__ == '__main__':
     # Use production-ready server configuration
     port = int(os.environ.get('PORT', 5000))
