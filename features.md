@@ -31,8 +31,10 @@
 ## Features In Development 🚧
 
 ### 1. Enhanced Conversation Management
-- ❌ Long-term context management
-- ❌ Conversation summarization
+- ✅ Long-term context management
+  - Dynamic token-aware context window
+  - Automatic conversation summarization
+  - Recent message history preservation
 - ❌ Vector-based retrieval system for past conversations
 - ❌ Knowledge base integration
 

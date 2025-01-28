@@ -9,6 +9,8 @@ from openai import OpenAI
 import os
 import csv
 from io import StringIO
+from typing import List, Dict
+import tiktoken
 
 def init_routes(app):
     @app.route('/')
@@ -159,27 +161,40 @@ def init_routes(app):
                 if not conversation or conversation.student_id != current_user.student_profile.user_id:
                     return jsonify({'error': 'Invalid conversation'}), 404
 
-            # Get recent conversation history (last 10 messages)
-            recent_messages = []
-            if conversation_id:
-                recent_messages = Message.query.filter_by(conversation_id=conversation_id)\
-                    .order_by(Message.timestamp.desc())\
-                    .limit(10)\
-                    .all()
-                recent_messages.reverse()  # Put in chronological order
-
-            # Construct messages array for OpenAI
+            # Get recent conversation history
             messages = [
                 {"role": "system", "content": "As a Python programming tutor, your role is to assist students in understanding concepts and solving problems without providing direct answers. Use the Socratic method by asking guiding questions that encourage critical thinking. Provide helpful hints, clarify concepts, and break down complex ideas into simpler parts. Focus on fostering the student's problem-solving skills and understanding of Python programming."}
             ]
 
-            # Add conversation history
-            for msg in recent_messages:
-                role = "assistant" if msg.sender_type == SenderType.AI_TUTOR else "user"
-                messages.append({
-                    "role": role,
-                    "content": msg.message_content
-                })
+            if conversation_id:
+                # Get all messages from the conversation
+                recent_messages = Message.query.filter_by(conversation_id=conversation_id)\
+                    .order_by(Message.timestamp.desc())\
+                    .all()
+                
+                # Check if we need a summary
+                if len(recent_messages) > 10:
+                    summary = create_summary(conversation_id)
+                    if summary:
+                        messages.append({
+                            "role": "system",
+                            "content": f"Previous conversation summary: {summary}"
+                        })
+                
+                # Add recent messages, checking token count
+                for msg in reversed(recent_messages[:10]):  # Process most recent 10 messages
+                    role = "assistant" if msg.sender_type == SenderType.AI_TUTOR else "user"
+                    new_message = {
+                        "role": role,
+                        "content": msg.message_content
+                    }
+                    
+                    # Check if adding this message would exceed token limit
+                    MAX_TOKENS = 3000  # Leave room for response
+                    if count_tokens(messages + [new_message]) < MAX_TOKENS:
+                        messages.append(new_message)
+                    else:
+                        break
 
             # Add the current message
             messages.append({"role": "user", "content": message_content})
@@ -414,3 +429,46 @@ def init_routes(app):
         except Exception as e:
             db.session.rollback()
             return jsonify({'error': str(e)}), 500
+
+def count_tokens(messages: List[Dict]) -> int:
+    """Count tokens in a list of messages."""
+    encoding = tiktoken.encoding_for_model("gpt-3.5-turbo")
+    num_tokens = 0
+    for message in messages:
+        # Every message follows {role: ..., content: ...} format
+        num_tokens += 4  # Format tax per message
+        for key, value in message.items():
+            num_tokens += len(encoding.encode(str(value)))
+    num_tokens += 2  # Every reply is primed with <im_start>assistant
+    return num_tokens
+
+def create_summary(conversation_id: int) -> str:
+    """Create a summary of older messages in the conversation."""
+    client = OpenAI(api_key=os.getenv('OPENAI_API_KEY'))
+    
+    # Get all messages except the 10 most recent
+    older_messages = Message.query.filter_by(conversation_id=conversation_id)\
+        .order_by(Message.timestamp.desc())\
+        .offset(10)\
+        .limit(50)\
+        .all()
+    
+    if not older_messages:
+        return None
+        
+    # Format messages for summarization
+    messages_text = "\n".join([
+        f"{'Student' if msg.sender_type == SenderType.STUDENT else 'Tutor'}: {msg.message_content}"
+        for msg in older_messages
+    ])
+    
+    # Get summary from OpenAI
+    summary_response = client.chat.completions.create(
+        model="gpt-3.5-turbo",
+        messages=[
+            {"role": "system", "content": "Summarize the key points of this tutoring conversation, focusing on the main concepts discussed and questions asked."},
+            {"role": "user", "content": messages_text}
+        ]
+    )
+    
+    return summary_response.choices[0].message.content
