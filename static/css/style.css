@@ -98,3 +98,86 @@ main {
 .navbar-toggler-icon {
     background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba(234, 205, 194, 0.9)' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
 }
+
+/* Mobile Responsiveness Improvements */
+@media (max-width: 768px) {
+    /* Improved Navigation */
+    .custom-nav {
+        padding: 0.5rem;
+    }
+    
+    .navbar-brand {
+        font-size: 1.2rem;
+    }
+    
+    /* Sidebar Behavior */
+    .with-sidebar {
+        flex-direction: column;
+    }
+    
+    .sidebar {
+        width: 100%;
+        height: auto;
+        max-height: 200px;
+        border-right: none;
+        border-bottom: 1px solid var(--eggplant);
+    }
+    
+    /* Chat Interface */
+    .chat-messages {
+        padding: 0.5rem;
+    }
+    
+    .message {
+        max-width: 95%;
+        padding: 0.75rem;
+        margin-bottom: 0.5rem;
+    }
+    
+    .input-container {
+        padding: 0.5rem;
+    }
+    
+    .chat-input {
+        font-size: 0.9rem;
+    }
+    
+    /* Button Sizing */
+    .btn {
+        padding: 0.4rem 0.8rem;
+        font-size: 0.9rem;
+    }
+    
+    /* Code Block Adjustments */
+    .message pre {
+        max-width: 100%;
+        overflow-x: auto;
+        font-size: 0.8rem;
+    }
+    
+    /* Feedback Buttons */
+    .feedback-buttons {
+        flex-direction: column;
+        gap: 0.25rem;
+    }
+    
+    .feedback-btn {
+        width: 100%;
+    }
+}
+
+/* Small phones */
+@media (max-width: 480px) {
+    .navbar-brand {
+        font-size: 1rem;
+    }
+    
+    .message {
+        max-width: 98%;
+        padding: 0.5rem;
+    }
+    
+    .chat-input {
+        font-size: 0.8rem;
+    }
+}
