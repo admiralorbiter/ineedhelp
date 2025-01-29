@@ -24,7 +24,8 @@ def dashboard():
                 user_id=student.id,
                 daily_question_limit=20,
                 questions_asked_today=0,
-                skill_level='beginner'  # Default skill level
+                skill_level='beginner',  # Default skill level
+                reading_level='G6'  # Default to Grade 6
             )
             db.session.add(profile)
     
@@ -49,15 +50,15 @@ def create_student():
             role=UserRole.STUDENT
         )
 
-        # Add user first
         db.session.add(new_student)
-        db.session.flush()  # This assigns the ID to new_student
+        db.session.flush()
 
         # Create associated student profile
         student_profile = StudentProfile(
             user_id=new_student.id,
             daily_question_limit=20,
-            questions_asked_today=0
+            questions_asked_today=0,
+            reading_level='G6'  # Default to Grade 6
         )
         db.session.add(student_profile)
         
@@ -86,13 +87,15 @@ def edit_student(student_id):
             student.email = request.form['email']
             student.username = request.form['email']
             
-            # Update skill level
+            # Update profiles
             if student.student_profile:
                 student.student_profile.skill_level = request.form['skill_level']
+                student.student_profile.reading_level = request.form['reading_level']
             else:
                 profile = StudentProfile(
                     user_id=student.id,
-                    skill_level=request.form['skill_level']
+                    skill_level=request.form['skill_level'],
+                    reading_level=request.form['reading_level']
                 )
                 db.session.add(profile)
             

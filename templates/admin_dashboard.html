@@ -87,6 +87,7 @@
                             <th>Last Name</th>
                             <th>Email</th>
                             <th>Skill Level</th>
+                            <th>Reading Level</th>
                             <th>Questions Left Today</th>
                             <th>Actions</th>
                         </tr>
@@ -102,6 +103,17 @@
                                 <span class="skill-badge skill-{{ student.student_profile.skill_level if student.student_profile else 'beginner' }}">
                                     {{ student.student_profile.skill_level.title() if student.student_profile else 'Beginner' }}
                                 </span>
+                            </td>
+                            <td>
+                                {% if student.student_profile %}
+                                    {% if student.student_profile.reading_level == 'K' %}
+                                        Kindergarten
+                                    {% else %}
+                                        Grade {{ student.student_profile.reading_level }}
+                                    {% endif %}
+                                {% else %}
+                                    N/A
+                                {% endif %}
                             </td>
                             <td>
                                 {% if student.student_profile %}

@@ -43,6 +43,22 @@ class QuestionLimitMixin:
             return True
         return False
 
+# Add this at the top with other enums
+class ReadingLevel(str, Enum):
+    K = 'K'
+    G1 = '1'
+    G2 = '2'
+    G3 = '3'
+    G4 = '4'
+    G5 = '5'
+    G6 = '6'
+    G7 = '7'
+    G8 = '8'
+    G9 = '9'
+    G10 = '10'
+    G11 = '11'
+    G12 = '12'
+
 # User model
 class User(db.Model, UserMixin):
     __tablename__ = 'users'
@@ -117,6 +133,9 @@ class StudentProfile(db.Model, QuestionLimitMixin):
     # Learning preferences
     needs_detailed_explanations = db.Column(db.Boolean, default=True)
     prefers_examples = db.Column(db.Boolean, default=True)
+
+    # Add this new field
+    reading_level = db.Column(db.Enum(ReadingLevel), default=ReadingLevel.G6)
 
     # Relationships
     user = db.relationship('User', back_populates='student_profile', foreign_keys=[user_id])

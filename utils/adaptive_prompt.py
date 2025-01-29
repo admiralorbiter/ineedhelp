@@ -26,18 +26,63 @@ class AdaptivePromptManager:
                 'question_style': 'supportive'
             }
     
+    def get_reading_level_instructions(self):
+        """Get language complexity instructions based on reading level"""
+        reading_level = self.profile.reading_level
+        
+        if reading_level in ['K', 'G1', 'G2', 'G3']:
+            return {
+                'vocabulary': 'simple',
+                'sentence_length': 'short',
+                'explanation_style': 'basic',
+                'examples': 'concrete and familiar'
+            }
+        elif reading_level in ['G4', 'G5', 'G6']:
+            return {
+                'vocabulary': 'grade-appropriate',
+                'sentence_length': 'moderate',
+                'explanation_style': 'clear',
+                'examples': 'relatable'
+            }
+        elif reading_level in ['G7', 'G8', 'G9']:
+            return {
+                'vocabulary': 'advanced',
+                'sentence_length': 'varied',
+                'explanation_style': 'detailed',
+                'examples': 'abstract'
+            }
+        else:  # G10-G12
+            return {
+                'vocabulary': 'sophisticated',
+                'sentence_length': 'complex',
+                'explanation_style': 'comprehensive',
+                'examples': 'complex and abstract'
+            }
+
     def generate_adaptive_prompt(self, base_prompt):
         """Modify the base prompt based on student's profile"""
         style = self.get_prompt_style()
+        reading_level = self.get_reading_level_instructions()
         
-        adaptations = {
-            'detailed': "\nPlease provide detailed explanations with examples.",
-            'moderate': "\nProvide balanced explanations with occasional examples.",
-            'concise': "\nFocus on key concepts with minimal elaboration."
-        }
+        # Add reading level instructions
+        reading_instructions = f"""
+        Please adjust your language complexity for a {self.profile.reading_level} reading level:
+        - Use {reading_level['vocabulary']} vocabulary
+        - Use {reading_level['sentence_length']} sentences
+        - Provide {reading_level['explanation_style']} explanations
+        - Use {reading_level['examples']} examples
+        """
+        
+        # Combine all adaptations
+        adapted_prompt = base_prompt + reading_instructions
         
         # Add style-specific instructions
-        adapted_prompt = base_prompt + adaptations[style['verbosity']]
+        if style['verbosity'] == 'detailed':
+            adapted_prompt += "\nPlease provide detailed explanations with examples."
+        elif style['verbosity'] == 'moderate':
+            adapted_prompt += "\nProvide balanced explanations with occasional examples."
+        else:
+            adapted_prompt += "\nFocus on key concepts with minimal elaboration."
         
         # Add performance-based modifications
         if self.profile.consecutive_failures > 2:
