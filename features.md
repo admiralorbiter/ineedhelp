@@ -49,7 +49,7 @@
 - ✅ Difficulty level adjustment
 - ✅ Adaptive respone based on grade level response
 - ❌ Interactive code execution environment
-- ❌ Code syntax highlighting
+- ✅ Code syntax highlighting
 - ❌ Multiple programming language support
 - ❌ Error detection and debugging assistance
 

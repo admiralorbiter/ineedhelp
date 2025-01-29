@@ -85,6 +85,22 @@ document.addEventListener('DOMContentLoaded', function() {
             const messageDiv = document.createElement('div');
             messageDiv.className = `message ${message.role}`;
             
+            // Process content for code blocks for both user and assistant messages
+            let content = message.content;
+            
+            // Replace markdown code blocks with highlighted HTML
+            content = content.replace(/```(\w+)?\n([\s\S]*?)```/g, (match, lang, code) => {
+                const language = lang || 'plaintext';
+                const highlighted = hljs.highlight(code.trim(), {
+                    language: language,
+                    ignoreIllegals: true
+                }).value;
+                return `<pre><code class="hljs language-${language}">${highlighted}</code></pre>`;
+            });
+            
+            // Replace inline code for both message types
+            content = content.replace(/`([^`]+)`/g, '<code>$1</code>');
+            
             let feedbackHtml = '';
             if (message.role === 'assistant') {
                 feedbackHtml = `
@@ -101,12 +117,18 @@ document.addEventListener('DOMContentLoaded', function() {
             
             messageDiv.innerHTML = `
                 <div class="message-content">
-                    ${message.content}
+                    ${content}
                 </div>
                 ${feedbackHtml}
             `;
             chatMessages.appendChild(messageDiv);
         });
+        
+        // Initialize syntax highlighting on all new content
+        document.querySelectorAll('pre code').forEach((block) => {
+            hljs.highlightBlock(block);
+        });
+        
         chatMessages.scrollTop = chatMessages.scrollHeight;
         
         // Add feedback button handlers
