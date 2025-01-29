@@ -78,6 +78,16 @@ Paste your code here
             }
 
             if (data.success) {
+                // Reset the form
+                chatInput.value = '';
+                chatInput.style.height = 'auto';  // Reset height
+                fileInput.value = '';  // Clear file input
+                filePreview.textContent = '';  // Clear file preview
+                filePreview.classList.remove('active');  // Hide preview container
+                
+                // Reset any active states
+                codeBtn.classList.remove('active');
+                
                 currentConversationId = data.conversation_id;
                 appendMessages(data.messages);
             }
@@ -89,7 +99,7 @@ Paste your code here
             errorDiv.textContent = error.message;
             chatMessages.appendChild(errorDiv);
             
-            // Restore the message in the input
+            // Don't reset the form on error so user can try again
             chatInput.value = message;
         }
     });
@@ -138,6 +148,13 @@ Paste your code here
             const messageDiv = document.createElement('div');
             messageDiv.className = `message ${message.role}`;
             
+            // Add model indicator for assistant messages
+            let modelIndicator = '';
+            if (message.role === 'assistant') {
+                const modelName = message.model || 'GPT-3.5';
+                modelIndicator = `<div class="model-indicator">${modelName}</div>`;
+            }
+            
             // Process content for code blocks and file attachments
             let content = message.content;
             
@@ -179,7 +196,7 @@ Paste your code here
             let feedbackHtml = '';
             if (message.role === 'assistant') {
                 feedbackHtml = `
-                    <div class="feedback-buttons" data-message-id="${message.id}">
+                    <div class="feedback-buttons">
                         <button class="btn btn-sm btn-outline-success feedback-btn" data-feedback="understood">
                             I understand ✓
                         </button>
@@ -191,6 +208,7 @@ Paste your code here
             }
             
             messageDiv.innerHTML = `
+                ${modelIndicator}
                 <div class="message-content">
                     ${content}
                 </div>
@@ -199,12 +217,11 @@ Paste your code here
             chatMessages.appendChild(messageDiv);
         });
         
-        // Initialize syntax highlighting on all new content
+        // Scroll to bottom and initialize syntax highlighting
+        chatMessages.scrollTop = chatMessages.scrollHeight;
         document.querySelectorAll('pre code').forEach((block) => {
             hljs.highlightBlock(block);
         });
-        
-        chatMessages.scrollTop = chatMessages.scrollHeight;
         
         // Add feedback button handlers
         document.querySelectorAll('.feedback-btn').forEach(button => {

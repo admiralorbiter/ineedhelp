@@ -23,7 +23,9 @@
 - ✅ Clean, responsive chat UI
 - ✅ Message history display
 - ✅ New chat creation
-- ❌ File Upload to chat
+- ✅ Image Upload to chat
+- ✅ Code Upload to chat
+- 🔬 File Upload to chat
 
 ### 5. Basic AI Integration
 - ✅ Integration with OpenAI's API
