@@ -22,7 +22,7 @@
                 {{ form.password.label(class="form-label") }}
                 {{ form.password(class="form-control", placeholder="Enter password") }}
             </div>
-            <button type="submit" class="btn login-btn">{{ form.submit.label.text }}</button>
+            <button type="submit" class="login-btn">{{ form.submit.label.text }}</button>
         </form>
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}

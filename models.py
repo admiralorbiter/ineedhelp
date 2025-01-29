@@ -103,18 +103,35 @@ class StudentProfile(db.Model, QuestionLimitMixin):
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), primary_key=True)
     teacher_id = db.Column(db.Integer, db.ForeignKey('users.id'))
     daily_question_limit = db.Column(db.Integer, default=20)
+    
+    # New fields for adaptive prompting
+    skill_level = db.Column(db.String(20), default='beginner')  # beginner, intermediate, advanced
+    consecutive_successes = db.Column(db.Integer, default=0)
+    consecutive_failures = db.Column(db.Integer, default=0)
+    total_questions = db.Column(db.Integer, default=0)
+    successful_interactions = db.Column(db.Integer, default=0)
+    
+    # Topic-specific proficiency (stored as JSON)
+    topic_proficiency = db.Column(db.JSON, default=dict)
+    
+    # Learning preferences
+    needs_detailed_explanations = db.Column(db.Boolean, default=True)
+    prefers_examples = db.Column(db.Boolean, default=True)
 
     # Relationships
-    user = db.relationship(
-        'User',
-        back_populates='student_profile',
-        foreign_keys=[user_id]
-    )
-    teacher = db.relationship(
-        'User',
-        back_populates='students',
-        foreign_keys=[teacher_id]
-    )
+    user = db.relationship('User', back_populates='student_profile', foreign_keys=[user_id])
+    teacher = db.relationship('User', back_populates='students', foreign_keys=[teacher_id])
+
+    def update_skill_level(self):
+        """Update skill level based on performance metrics"""
+        success_rate = self.successful_interactions / max(self.total_questions, 1)
+        
+        if success_rate >= 0.8 and self.consecutive_successes >= 5:
+            self.skill_level = 'advanced'
+        elif success_rate >= 0.6 and self.consecutive_successes >= 3:
+            self.skill_level = 'intermediate'
+        else:
+            self.skill_level = 'beginner'
 
     def __repr__(self):
         return f'<StudentProfile {self.user.username}>'

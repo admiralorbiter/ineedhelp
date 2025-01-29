@@ -32,6 +32,16 @@
                 <div class="message-content">
                     {{ message.content }}
                 </div>
+                {% if message.role == 'assistant' %}
+                <div class="feedback-buttons" data-message-id="{{ message.id }}">
+                    <button class="btn btn-sm btn-outline-success feedback-btn" data-feedback="understood">
+                        I understand ✓
+                    </button>
+                    <button class="btn btn-sm btn-outline-danger feedback-btn" data-feedback="confused">
+                        Still confused ?
+                    </button>
+                </div>
+                {% endif %}
             </div>
             {% endfor %}
         </div>

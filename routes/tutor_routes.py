@@ -5,6 +5,7 @@ from datetime import datetime, timezone
 from openai import OpenAI
 import os
 from utils.embeddings import find_relevant_knowledge
+from utils.adaptive_prompt import AdaptivePromptManager
 
 tutor_bp = Blueprint('tutor', __name__, url_prefix='/tutor')
 
@@ -45,13 +46,20 @@ def send_message():
     message = request.json.get('message')
     conversation_id = request.json.get('conversation_id')
     
-    # Load Socratic prompt
+    # Get student profile
+    profile = current_user.student_profile
+    
+    # Initialize adaptive prompt manager
+    prompt_manager = AdaptivePromptManager(profile)
+    
+    # Load and adapt the Socratic prompt
     try:
         with open('socratic_prompt.md', 'r') as f:
-            socratic_prompt = f.read()
+            base_prompt = f.read()
+        adapted_prompt = prompt_manager.generate_adaptive_prompt(base_prompt)
     except Exception as e:
         print(f"Error loading Socratic prompt: {str(e)}")
-        socratic_prompt = "You are a Socratic-style tutor specializing in Python programming."
+        adapted_prompt = "You are a Socratic-style tutor specializing in Python programming."
     
     # Find relevant knowledge base entries
     relevant_knowledge = find_relevant_knowledge(message)
@@ -64,7 +72,7 @@ def send_message():
             knowledge_context += f"- {entry.title}: {entry.content}\n"
     
     # Combine Socratic prompt with knowledge context in a single system message
-    combined_prompt = f"""{socratic_prompt}
+    combined_prompt = f"""{adapted_prompt}
 
 {knowledge_context}
 
@@ -193,3 +201,50 @@ def get_conversation(conversation_id):
     } for msg in conversation.messages]
 
     return jsonify({'messages': messages})
+
+@tutor_bp.route('/interaction_feedback', methods=['POST'])
+@login_required
+def interaction_feedback():
+    if current_user.role != UserRole.STUDENT:
+        return jsonify({'error': 'Only students can provide interaction feedback'}), 403
+        
+    data = request.json
+    message_id = data.get('message_id')
+    was_helpful = data.get('was_helpful', False)
+    understood_concept = data.get('understood_concept', False)
+    
+    try:
+        # Get the student profile
+        profile = current_user.student_profile
+        if not profile:
+            return jsonify({'error': 'Student profile not found'}), 404
+            
+        # Update metrics
+        profile.total_questions += 1
+        if understood_concept:
+            profile.successful_interactions += 1
+            profile.consecutive_successes += 1
+            profile.consecutive_failures = 0
+        else:
+            profile.consecutive_failures += 1
+            profile.consecutive_successes = 0
+            
+        # Update skill level based on new metrics
+        profile.update_skill_level()
+        
+        # Update topic proficiency if provided
+        topic = data.get('topic')
+        if topic:
+            current_proficiency = profile.topic_proficiency.get(topic, {})
+            current_proficiency['attempts'] = current_proficiency.get('attempts', 0) + 1
+            current_proficiency['successes'] = current_proficiency.get('successes', 0) + (1 if understood_concept else 0)
+            profile.topic_proficiency[topic] = current_proficiency
+            
+        db.session.commit()
+        
+        return jsonify({'success': True})
+        
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error updating interaction feedback: {str(e)}")
+        return jsonify({'error': 'Failed to update feedback'}), 500

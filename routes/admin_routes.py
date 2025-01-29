@@ -14,8 +14,21 @@ def dashboard():
         flash('Access denied: You are not an admin.', 'danger')
         return redirect(url_for('auth.index'))
     
-    # Query all students
+    # Query all students with their profiles
     students = User.query.filter_by(role=UserRole.STUDENT).all()
+    
+    # Ensure all students have profiles and skill levels
+    for student in students:
+        if not student.student_profile:
+            profile = StudentProfile(
+                user_id=student.id,
+                daily_question_limit=20,
+                questions_asked_today=0,
+                skill_level='beginner'  # Default skill level
+            )
+            db.session.add(profile)
+    
+    db.session.commit()
     return render_template('admin_dashboard.html', students=students)
 
 @admin_bp.route('/create_student', methods=['POST'])
@@ -71,7 +84,17 @@ def edit_student(student_id):
             student.first_name = request.form['firstName']
             student.last_name = request.form['lastName']
             student.email = request.form['email']
-            student.username = request.form['email']  # Update username if email changes
+            student.username = request.form['email']
+            
+            # Update skill level
+            if student.student_profile:
+                student.student_profile.skill_level = request.form['skill_level']
+            else:
+                profile = StudentProfile(
+                    user_id=student.id,
+                    skill_level=request.form['skill_level']
+                )
+                db.session.add(profile)
             
             # Only update password if a new one is provided
             if request.form['password']:
