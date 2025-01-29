@@ -31,6 +31,7 @@
 - ✅ Integration with OpenAI's API
 - ✅ Basic Socratic method prompt
 - ❌ Model selection and adaptive model selection
+- ✅ Uses GPT-4o-mini for file and image analysis and GPT-3.5-turbo for text conversations
 - ❌ Advanced techniques for model selection and comparison based on task
 - ❌ Answer caching and library building for cost optimization
 
