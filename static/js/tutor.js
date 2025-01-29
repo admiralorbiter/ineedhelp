@@ -2,12 +2,46 @@ document.addEventListener('DOMContentLoaded', function() {
     const chatForm = document.getElementById('chat-form');
     const chatInput = document.getElementById('user-input');
     const chatMessages = document.getElementById('chat-messages');
+    const codeBtn = document.getElementById('code-btn');
     let currentConversationId = null;
 
     // Auto-resize input
     chatInput.addEventListener('input', function() {
         this.style.height = 'auto';
         this.style.height = (this.scrollHeight) + 'px';
+    });
+
+    // Code button handler
+    codeBtn.addEventListener('click', function() {
+        // Toggle active state
+        this.classList.toggle('active');
+        
+        // If button is active, insert code template
+        if (this.classList.contains('active')) {
+            const template = `What's your question?
+
+\`\`\`python
+Paste your code here
+\`\`\``;
+            chatInput.value = template;
+        }
+        
+        // Adjust textarea height
+        chatInput.style.height = 'auto';
+        chatInput.style.height = chatInput.scrollHeight + 'px';
+        chatInput.focus();
+    });
+    
+    // Handle tab key in textarea for code indentation
+    chatInput.addEventListener('keydown', function(e) {
+        if (e.key === 'Tab') {
+            e.preventDefault();
+            const start = this.selectionStart;
+            const end = this.selectionEnd;
+            
+            this.value = this.value.substring(0, start) + '    ' + this.value.substring(end);
+            this.selectionStart = this.selectionEnd = start + 4;
+        }
     });
 
     // Handle form submission
@@ -17,9 +51,12 @@ document.addEventListener('DOMContentLoaded', function() {
         const message = chatInput.value.trim();
         if (!message) return;
 
-        // Clear input
+        // Clear input and reset code button
         chatInput.value = '';
         chatInput.style.height = 'auto';
+        if (codeBtn.classList.contains('active')) {
+            codeBtn.classList.remove('active');
+        }
 
         try {
             const response = await fetch('/tutor/send_message', {

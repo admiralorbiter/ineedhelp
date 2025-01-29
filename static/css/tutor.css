@@ -214,3 +214,25 @@
 .message.assistant code {
     color: var(--pale-dogwood);
 }
+
+.code-insert-btn {
+    background-color: var(--dark-purple);
+    color: var(--pale-dogwood);
+    border: 1px solid var(--eggplant);
+    border-radius: 4px;
+    padding: 0.5rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.code-insert-btn:hover {
+    background-color: var(--redwood);
+}
+
+.code-insert-btn.active {
+    background-color: var(--redwood);
+    border-color: var(--pale-dogwood);
+}
