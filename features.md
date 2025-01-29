@@ -27,6 +27,9 @@
 ### 5. Basic AI Integration
 - ✅ Integration with OpenAI's API
 - ✅ Basic Socratic method prompt
+- ❌ Model selection and adaptive model selection
+- ❌ Advanced techniques for model selection and comparison based on task
+- ❌ Answer caching and library building for cost optimization
 
 ## Features In Development 🚧
 
@@ -44,6 +47,11 @@
     - Vector database for semantic search
     - Contextual query processing
     - Metadata tagging system
+- ❌ Answer caching system
+    - Frequently asked questions library
+    - Similar question detection
+    - Automated answer reuse
+    - API cost optimization
 
 ### 2. Advanced Tutoring Features
 - ✅ Difficulty level adjustment
@@ -158,4 +166,4 @@
 - Heroku hosting
 - AWS S3 for storage (planned)
 - Redis for caching (planned)
-- Vector database service (Pinecone/Weaviate)
+- Vector database service (Pinecone/Weaviate) (planned)
