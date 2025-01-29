@@ -46,7 +46,7 @@
             {% endfor %}
         </div>
         
-        <form class="chat-input-form" id="chat-form">
+        <form class="chat-input-form" id="chat-form" enctype="multipart/form-data">
             <div class="input-container">
                 <button type="button" class="code-insert-btn" id="code-btn">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
@@ -54,6 +54,14 @@
                         <path d="M8 6L2 12L8 18"></path>
                     </svg>
                 </button>
+                <button type="button" class="file-upload-btn" id="file-btn">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                        <polyline points="17 8 12 3 7 8"/>
+                        <line x1="12" y1="3" x2="12" y2="15"/>
+                    </svg>
+                </button>
+                <input type="file" id="file-input" name="file" style="display: none">
                 <textarea 
                     id="user-input" 
                     name="message" 
@@ -67,6 +75,7 @@
                     </svg>
                 </button>
             </div>
+            <div id="file-preview" class="file-preview"></div>
         </form>
     </div>
 </div>

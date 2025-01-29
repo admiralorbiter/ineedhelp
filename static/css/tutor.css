@@ -236,3 +236,66 @@
     background-color: var(--redwood);
     border-color: var(--pale-dogwood);
 }
+
+.file-upload-btn {
+    background-color: var(--dark-purple);
+    color: var(--pale-dogwood);
+    border: 1px solid var(--eggplant);
+    border-radius: 4px;
+    padding: 0.5rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.file-upload-btn:hover {
+    background-color: var(--redwood);
+}
+
+.file-upload-btn.active {
+    background-color: var(--redwood);
+    border-color: var(--pale-dogwood);
+}
+
+.file-preview {
+    display: none;
+    margin-top: 0.5rem;
+    padding: 0.5rem;
+    background-color: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+    font-size: 0.9rem;
+    color: var(--pale-dogwood);
+}
+
+.file-preview.active {
+    display: block;
+}
+
+.file-attachment {
+    margin-top: 0.5rem;
+    padding: 0.5rem;
+    background-color: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+}
+
+.file-attachment img.uploaded-image {
+    max-width: 100%;
+    max-height: 400px;
+    border-radius: 4px;
+    display: block;
+}
+
+.file-attachment a {
+    color: var(--pale-dogwood);
+    text-decoration: underline;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.file-attachment svg {
+    width: 20px;
+    height: 20px;
+}

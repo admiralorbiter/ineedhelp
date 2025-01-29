@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, jsonify
+from flask import Blueprint, current_app, render_template, request, jsonify, send_from_directory
 from flask_login import login_required, current_user
 from models import Conversation, Message, SenderType, StudentProfile, TeacherProfile, UserRole, db
 from datetime import datetime, timezone
@@ -6,8 +6,14 @@ from openai import OpenAI
 import os
 from utils.embeddings import find_relevant_knowledge
 from utils.adaptive_prompt import AdaptivePromptManager
+from werkzeug.utils import secure_filename
 
 tutor_bp = Blueprint('tutor', __name__, url_prefix='/tutor')
+
+ALLOWED_EXTENSIONS = {'txt', 'pdf', 'png', 'jpg', 'jpeg', 'py'}
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 @tutor_bp.route('/')
 @login_required
@@ -43,8 +49,30 @@ def chat():
 @tutor_bp.route('/send_message', methods=['POST'])
 @login_required
 def send_message():
-    message = request.json.get('message')
-    conversation_id = request.json.get('conversation_id')
+    message = request.form.get('message', '')
+    conversation_id = request.form.get('conversation_id')
+    
+    # Handle file upload
+    file_path = None
+    if 'file' in request.files:
+        file = request.files['file']
+        if file and allowed_file(file.filename):
+            filename = secure_filename(file.filename)
+            # Include user ID in path for security
+            user_folder = str(current_user.id)
+            upload_dir = os.path.join(current_app.config['UPLOAD_FOLDER'], user_folder)
+            os.makedirs(upload_dir, exist_ok=True)
+            
+            # Save file with user ID prefix
+            file_path = os.path.join(upload_dir, filename)
+            file.save(file_path)
+            
+            # Update message with file path including user ID
+            relative_path = f"{user_folder}/{filename}"
+            if message:
+                message += f"\n[Attached file: {relative_path}]"
+            else:
+                message = f"[Attached file: {relative_path}]"
     
     # Get student profile
     profile = current_user.student_profile
@@ -248,3 +276,16 @@ def interaction_feedback():
         db.session.rollback()
         print(f"Error updating interaction feedback: {str(e)}")
         return jsonify({'error': 'Failed to update feedback'}), 500
+
+@tutor_bp.route('/uploads/<path:filename>')
+@login_required
+def uploaded_file(filename):
+    # Get user ID from the path
+    user_id = filename.split('/')[0]
+    
+    # Security check - only allow access to own files
+    if str(current_user.id) != user_id:
+        return jsonify({'error': 'Unauthorized'}), 403
+        
+    upload_dir = os.path.join(current_app.config['UPLOAD_FOLDER'])
+    return send_from_directory(upload_dir, filename)

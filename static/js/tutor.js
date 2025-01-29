@@ -3,6 +3,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const chatInput = document.getElementById('user-input');
     const chatMessages = document.getElementById('chat-messages');
     const codeBtn = document.getElementById('code-btn');
+    const fileBtn = document.getElementById('file-btn');
+    const fileInput = document.getElementById('file-input');
+    const filePreview = document.getElementById('file-preview');
     let currentConversationId = null;
 
     // Auto-resize input
@@ -49,25 +52,23 @@ Paste your code here
         e.preventDefault();
         
         const message = chatInput.value.trim();
-        if (!message) return;
-
-        // Clear input and reset code button
-        chatInput.value = '';
-        chatInput.style.height = 'auto';
-        if (codeBtn.classList.contains('active')) {
-            codeBtn.classList.remove('active');
+        const file = fileInput.files[0];
+        
+        if (!message && !file) return;
+        
+        const formData = new FormData();
+        formData.append('message', message);
+        if (file) {
+            formData.append('file', file);
         }
-
+        if (currentConversationId) {
+            formData.append('conversation_id', currentConversationId);
+        }
+        
         try {
             const response = await fetch('/tutor/send_message', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    message: message,
-                    conversation_id: currentConversationId
-                })
+                body: formData
             });
 
             const data = await response.json();
@@ -117,13 +118,50 @@ Paste your code here
         chatInput.value = '';
     });
 
+    fileBtn.addEventListener('click', function() {
+        fileInput.click();
+    });
+
+    fileInput.addEventListener('change', function() {
+        const file = this.files[0];
+        if (file) {
+            filePreview.textContent = `Selected file: ${file.name}`;
+            filePreview.classList.add('active');
+        } else {
+            filePreview.textContent = '';
+            filePreview.classList.remove('active');
+        }
+    });
+
     function appendMessages(messages) {
         messages.forEach(message => {
             const messageDiv = document.createElement('div');
             messageDiv.className = `message ${message.role}`;
             
-            // Process content for code blocks for both user and assistant messages
+            // Process content for code blocks and file attachments
             let content = message.content;
+            
+            // Handle file attachments
+            const fileMatch = content.match(/\[Attached file: (.*?)\]/);
+            if (fileMatch) {
+                const filename = fileMatch[1];
+                const fileExt = filename.split('.').pop().toLowerCase();
+                
+                // Create file attachment display
+                const isImage = ['jpg', 'jpeg', 'png', 'gif'].includes(fileExt);
+                const attachmentHtml = isImage 
+                    ? `<div class="file-attachment">
+                        <img src="/tutor/uploads/${filename}" alt="Uploaded image" class="uploaded-image">
+                       </div>`
+                    : `<div class="file-attachment">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6z"/>
+                        </svg>
+                        <a href="/tutor/uploads/${filename}" target="_blank">${filename}</a>
+                       </div>`;
+                       
+                content = content.replace(fileMatch[0], '') + attachmentHtml;
+            }
             
             // Replace markdown code blocks with highlighted HTML
             content = content.replace(/```(\w+)?\n([\s\S]*?)```/g, (match, lang, code) => {

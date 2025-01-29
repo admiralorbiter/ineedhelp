@@ -23,6 +23,7 @@
 - ✅ Clean, responsive chat UI
 - ✅ Message history display
 - ✅ New chat creation
+- ❌ File Upload to chat
 
 ### 5. Basic AI Integration
 - ✅ Integration with OpenAI's API
@@ -104,39 +105,34 @@
 
 ## Development Priority List 📋
 
-1. Code syntax highlighting and formatting
-   - Implement Markdown/code formatting in chat
-   - Add syntax highlighting for multiple programming languages
-   - Improve code block display
-
-2. Research Spike: Vector Database Integration
+1. Research Spike: Vector Database Integration
    - Evaluate different embedding approaches
    - Compare performance against current context management
    - Benchmark vector database options (Pinecone, Weaviate, etc.)
    - Define testing methodology for comparison
    - Cost-benefit analysis for implementation
 
-3. Interactive Code Environment
+2. Interactive Code Environment
    - Add in-browser code editor
    - Implement secure code execution
    - Create output display system
 
-4. Prompt Management System
+3. Prompt Management System
    - Develop dynamic prompt templates
    - Create prompt customization interface
    - Implement context-aware prompt selection
 
-5. Learning Analytics Dashboard
+4. Learning Analytics Dashboard
    - Create student progress tracking
    - Implement usage analytics
    - Add performance visualization tools
 
-6. Assessment System
+5. Assessment System
    - Develop quiz generation system
    - Create code challenge framework
    - Implement automated assessment tools
 
-7. Collaboration Tools
+6. Collaboration Tools
    - Add group chat functionality
    - Implement peer review system
    - Create discussion forums
@@ -146,10 +142,6 @@
 ### Backend
 - Python 3.8+
 - Flask web framework
-- PostgreSQL database
-  - Relational content store
-  - User/session management
-  - Analytics data
 - OpenAI API integration
 - Vector database (planned)
   - Document embeddings storage
